@@ -1,0 +1,12 @@
+# Ustawienia ekranu
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+
+# Kolory
+SKY_COLOR = (135, 206, 235)
+GROUND_COLOR = (34, 139, 34)
+
+# Stałe fizyczne
+GRAVITY = 0.5
+CAR_ACCELERATION = 0.2
+CAR_FRICTION = 0.1
