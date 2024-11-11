@@ -1,9 +1,11 @@
+# main.py
+
 import pygame
 from src.game import Game
 
 def main():
     pygame.init()
-    game = Game()
+    game = Game(render_mode=True)  # Ustaw render_mode na True
     game.run()
     pygame.quit()
 
