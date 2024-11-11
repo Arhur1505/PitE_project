@@ -24,3 +24,4 @@ Prosta gra wzorowana na **Hill Climb Racing**, napisana w Pythonie z użyciem bi
 
    ```bash
    git clone https://github.com/twoj-uzytkownik/hill_climb_racing.git
+No chyba jednak nie
