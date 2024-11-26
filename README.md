@@ -1,10 +1,10 @@
-# Hill Climb Racing Clone
+# Hill Climb Racing-Inspired Game
 
 A simple game inspired by **Hill Climb Racing**, written in Python using the Pygame library.
 
 ## About the Project
 
-This project is a clone of the popular game *Hill Climb Racing*, with additional integration of **Reinforcement Learning** using OpenAI Gym. The aim is to combine traditional game mechanics with AI-driven decision-making to create an engaging and dynamic experience.
+This project is a game based on the popular *Hill Climb Racing*, with additional integration of **Reinforcement Learning** using OpenAI Gym. The aim is to combine traditional game mechanics with AI-driven decision-making to create an engaging and dynamic experience.
 
 ## Features
 
