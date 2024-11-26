@@ -1,27 +1,24 @@
-# Hill Climb Racing
+# Hill Climb Racing Clone
 
-Prosta gra wzorowana na **Hill Climb Racing**, napisana w Pythonie z użyciem biblioteki Pygame.
+A simple game inspired by **Hill Climb Racing**, written in Python using the Pygame library.
 
-## Spis treści
+## About the Project
 
-- [Wymagania](#wymagania)
-- [Instalacja](#instalacja)
-- [Uruchomienie](#uruchomienie)
-- [Sterowanie](#sterowanie)
-- [Funkcje](#funkcje)
-- [Autor](#autor)
-- [Licencja](#licencja)
+This project is a clone of the popular game *Hill Climb Racing*, with additional integration of **Reinforcement Learning** using OpenAI Gym. The aim is to combine traditional game mechanics with AI-driven decision-making to create an engaging and dynamic experience.
 
-## Wymagania
+## Features
 
-- Python 3.x
+- Developed using **Python** and **Pygame**.
+- Implements **Reinforcement Learning** algorithms for autonomous gameplay.
+- Physics-based mechanics for realistic vehicle behavior.
+- Designed for experimentation and learning in AI and game development.
+
+## Getting Started
+
+### Prerequisites
+
+Ensure you have the following installed:
+
+- Python 3.8+
 - Pygame
-- PyMunk (jeśli używasz zaawansowanej fizyki)
-
-## Instalacja
-
-1. Sklonuj repozytorium:
-
-   ```bash
-   git clone https://github.com/twoj-uzytkownik/hill_climb_racing.git
-No chyba jednak nie
+- OpenAI Gym
