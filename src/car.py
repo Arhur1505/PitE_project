@@ -81,31 +81,79 @@ class Car:
 
         # Aktualizacja prędkości
         self.velocity_x = self.physics.velocity * math.cos(math.radians(self.angle))
-        # Dodanie wpływu grawitacji do prędkości pionowej
         self.velocity_y += self.physics.gravity * TIME_STEP
 
         # Aktualizacja pozycji
         self.x += self.velocity_x * TIME_STEP
         self.y += self.velocity_y * TIME_STEP
 
-        # Aktualizacja kąta
-        self.angle += math.degrees(self.angular_velocity * TIME_STEP)
+        # Dostosowanie kąta samochodu do nachylenia terenu
+        target_angle = incline
+        self.angle += (target_angle - self.angle) * 0.1  # Płynne dostosowanie kąta
 
-        # Sprawdzenie kolizji z terenem
+        # Sprawdzenie kolizji z terenem (koło styka się krawędzią z ziemią)
         ground_y = terrain.get_ground_y(self.x)
-        if self.y > ground_y - self.height / 2:
-            self.y = ground_y - self.height / 2
+        if self.y > ground_y - WHEEL_RADIUS:
+            self.y = ground_y - WHEEL_RADIUS
             self.velocity_y = 0  # Zatrzymanie pionowej prędkości
             self.angular_velocity = 0
-            if abs(self.angle) > 90:  # Zwiększenie tolerancji do 90 stopni
+            if abs(self.angle) > 90:  # Unikaj przewracania
                 self.crashed = True
-                print(f"Angle after collision: {self.angle}")
 
     def draw(self, surface, camera_x):
-        # Rysowanie pojazdu z uwzględnieniem obrotu
-        car_rect = pygame.Rect(0, 0, self.width, self.height)
-        car_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        pygame.draw.rect(car_surface, (255, 0, 0), car_rect)
+        # Define wheel radius and bar length
+        wheel_radius = 15
+        bar_length = 100  # Increased distance between wheels
+
+        # Calculate positions for the front and rear wheels
+        front_wheel_x = self.x + (bar_length / 2) * math.cos(math.radians(self.angle)) - camera_x
+        front_wheel_y = self.y - (bar_length / 2) * math.sin(math.radians(self.angle))
+        rear_wheel_x = self.x - (bar_length / 2) * math.cos(math.radians(self.angle)) - camera_x
+        rear_wheel_y = self.y + (bar_length / 2) * math.sin(math.radians(self.angle))
+
+        # Calculate the center of the bar for driver positioning
+        bar_center_x = self.x - camera_x
+        bar_center_y = self.y
+
+        # Create a surface for the car with alpha for rotation
+        car_surface = pygame.Surface((bar_length + 40, wheel_radius * 2 + 40), pygame.SRCALPHA)
+        car_rect = car_surface.get_rect(center=(bar_center_x, bar_center_y))
+
+        # Draw the bar connecting the wheels
+        pygame.draw.line(
+            car_surface,
+            (0, 0, 0),  # Bar color (black)
+            (20, wheel_radius + 20),
+            (bar_length + 20, wheel_radius + 20),
+            4,  # Line thickness
+        )
+
+        # Draw the wheels
+        pygame.draw.circle(
+            car_surface,
+            (0, 0, 0),  # Wheel color (black)
+            (20, wheel_radius + 20),
+            wheel_radius,
+        )
+        pygame.draw.circle(
+            car_surface,
+            (0, 0, 0),  # Wheel color (black)
+            (bar_length + 20, wheel_radius + 20),
+            wheel_radius,
+        )
+
+        # Draw the driver rectangle in the middle of the bar
+        driver_width = 20
+        driver_height = 40
+        driver_rect = pygame.Rect(
+            bar_length // 2 + 10,  # Center horizontally relative to the bar
+            wheel_radius - driver_height // 2,  # Vertically centered on the bar
+            driver_width,
+            driver_height,
+        )
+        pygame.draw.rect(car_surface, (255, 0, 0), driver_rect)
+
+        # Rotate the entire car surface
         rotated_car = pygame.transform.rotate(car_surface, -self.angle)
-        rect = rotated_car.get_rect(center=(self.x - camera_x, self.y - self.height / 2))
-        surface.blit(rotated_car, rect)
+        rotated_rect = rotated_car.get_rect(center=(self.x - camera_x, self.y))
+        surface.blit(rotated_car, rotated_rect)

@@ -9,7 +9,7 @@ SKY_COLOR = (135, 206, 235)
 GROUND_COLOR = (34, 139, 34)
 
 # Stałe fizyczne
-GRAVITY = 9.81  # Przyspieszenie grawitacyjne (m/s^2)
+GRAVITY =15 # Przyspieszenie grawitacyjne (m/s^2)
 
 # Parametry pojazdu
 CAR_MASS = 1000  # Masa pojazdu w kilogramach
