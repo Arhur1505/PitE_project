@@ -1,5 +1,3 @@
-# src/game.py
-
 import pygame
 import numpy as np
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, SKY_COLOR, RENDER_MODE, TIME_STEP
@@ -11,7 +9,7 @@ class Game:
         self.render_mode = render_mode
         if self.render_mode:
             self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-            pygame.display.set_caption("Hill Climb Racing")
+            pygame.display.set_caption("Game")
         self.clock = pygame.time.Clock()
         self.running = True
         self.car = Car(100, SCREEN_HEIGHT - 200)

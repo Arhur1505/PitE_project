@@ -1,5 +1,3 @@
-# src/physics.py
-
 import math
 from settings import GRAVITY
 
