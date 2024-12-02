@@ -1,3 +1,2 @@
-pygame
-numpy
-gym
+pygame~=2.6.1
+Box2D~=2.3.10
