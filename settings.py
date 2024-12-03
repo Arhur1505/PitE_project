@@ -1,13 +1,11 @@
 import pygame
 
-# Ustawienia Pygame
 pygame.init()
 WIDTH, HEIGHT = 800, 400
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 FPS = 60
 
-# Kolory
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GROUND_COLOR = (100, 200, 100)

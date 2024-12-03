@@ -1,4 +1,3 @@
-
 from Box2D.b2 import world, staticBody, polygonShape
 
 def create_world():
