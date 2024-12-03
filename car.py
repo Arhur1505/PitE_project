@@ -36,7 +36,7 @@ def create_car(world):
         enableMotor=True
     )
 
-    # Tworzenie kierowcy
+    # Tworzenie kierowcyy
     driver_body = world.CreateDynamicBody(position=(5, 2.9))
     driver_body.CreateFixture(
         shape=polygonShape(box=(0.4, 0.4)), density=1, friction=0.3
