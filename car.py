@@ -1,5 +1,6 @@
 from Box2D.b2 import dynamicBody, polygonShape, circleShape
 
+
 def create_car(world):
     # Tworzenie pojazdu
     car_body = world.CreateDynamicBody(position=(5, 2))
