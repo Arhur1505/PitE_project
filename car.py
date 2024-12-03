@@ -41,6 +41,7 @@ def create_car(world):
     driver_body.CreateFixture(
         shape=polygonShape(box=(0.4, 0.4)), density=1, friction=0.3
     )
+    driver_body.userData = "driver"  # Dodanie userData
 
     # Połączenie kierowcy z samochodem
     driver_joint = world.CreateWeldJoint(

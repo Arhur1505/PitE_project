@@ -22,6 +22,7 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_segments, joi
 
     segment_width = 10
     last_segment_x = ground_segments[-1].position.x + segment_width / 2
+    meters = 0  # Dodanie licznika metrów
 
     while running:
         screen.fill(WHITE)
@@ -42,6 +43,7 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_segments, joi
             joints[1].motorSpeed = 0.0
 
         offset_x = car_body.position[0] * 20 - WIDTH / 2
+        meters = int(car_body.position[0])  # Aktualizacja licznika metrów
 
         if car_body.position.x + 30 > last_segment_x:
             new_segment = create_ground_segment(world, last_segment_x, width=segment_width)
@@ -61,6 +63,11 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_segments, joi
         draw_body(wheel1, WHEEL_COLOR, offset_x)
         draw_body(wheel2, WHEEL_COLOR, offset_x)
         draw_body(driver_body, DRIVER_COLOR, offset_x)
+
+        # Wyświetlanie licznika metrów
+        font = pygame.font.Font(None, 36)
+        text = font.render(f"Distance: {meters} m", True, (0, 0, 0))
+        screen.blit(text, (10, 10))
 
         pygame.display.flip()
         clock.tick(60)

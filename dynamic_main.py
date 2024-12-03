@@ -1,4 +1,3 @@
-# main.py
 from dynamic_physics import create_world, create_ground_segment
 from car import create_car
 from dynamic_game import game_loop
