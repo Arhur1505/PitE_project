@@ -1,9 +1,6 @@
-# game.py
 import pygame
 from settings import screen, WIDTH, HEIGHT, WHITE, GROUND_COLOR, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR
 from dynamic_physics import create_ground_segment
-
-
 
 def draw_body(body, color, offset_x):
     from Box2D.b2 import polygonShape, circleShape
