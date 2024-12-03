@@ -22,7 +22,7 @@ world = world(gravity=(0, -10), doSleep=True)
 # Tworzenie ziemi
 ground_body = world.CreateStaticBody(
     position=(0, 0),
-    shapes=polygonShape(box=(500, 1))  # Teren 50x1
+    shapes=polygonShape(box=(1000, 1))  # Teren 50x1
 )
 ground_body.CreateFixture(
     shape=polygonShape(box=(50, 1)),
@@ -33,7 +33,7 @@ ground_body.CreateFixture(
 
 # Dodanie przeszkód na ziemi
 ground_shape = ground_body.fixtures[0].shape
-for i in range(10, 500, 10):
+for i in range(10, 1000, 10):
     ground_body.CreateFixture(
         shape=polygonShape(vertices=[(i, 0), (i + 2, 2), (i + 4, 0)]),
         density=0,
