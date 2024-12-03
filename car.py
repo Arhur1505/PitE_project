@@ -18,7 +18,7 @@ def create_car(world):
             restitution=0.5
         )
 
-    # Połączenie kół z nadwoziem
+    # Połączenie kół z nadwozie
     joint1 = world.CreateRevoluteJoint(
         bodyA=car_body,
         bodyB=wheel1,
