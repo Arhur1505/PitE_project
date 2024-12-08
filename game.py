@@ -47,7 +47,6 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
             if event.type == pygame.QUIT:
                 running = False
 
-        # Sterowanie
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RIGHT]:
             joints[0].motorSpeed = -30.0
@@ -68,14 +67,12 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
             print("Game Over!")
             running = False
 
-        # Rysowanie terenu i obiektów
         draw_body(ground_body, GROUND_COLOR, offset_x)
         draw_body(car_body, CAR_COLOR, offset_x)
         draw_body(wheel1, WHEEL_COLOR, offset_x)
         draw_body(wheel2, WHEEL_COLOR, offset_x)
         draw_body(driver_body, DRIVER_COLOR, offset_x)
 
-        # Wyświetlanie licznika odległości
         distance = int(car_body.position[0])
         font = pygame.font.Font(None, 36)
         text = font.render(f"Distance: {distance} m", True, BLACK)
