@@ -4,7 +4,6 @@ import math
 from noise import pnoise1
 
 
-
 def create_world():
     physics_world = world(gravity=(0, -10), doSleep=True)
 
@@ -13,16 +12,15 @@ def create_world():
     end_x = 1000
     base_height = 5
     amplitude = 5
-    frequency = 0.021  # Im mniejsza wartość, tym wolniejsze zmiany wysokości
+    frequency = 0.022  # Im mniejsza wartość, tym wolniejsze zmiany wysokości
 
     dense_points = []
-    for x in range(start_x, end_x+1):
+    for x in range(start_x, end_x + 1):
         # Generujemy wysokość na podstawie perlin noise
-        noise_val = pnoise1(x * frequency)  # zakres -1 do 1
+        noise_val = pnoise1(x * frequency+0.25)  # zakres -1 do 1
         y = base_height + noise_val * amplitude
         dense_points.append((float(x), float(y)))
 
-    # Tworzymy ciało terenu jako chainShape
     ground_body = physics_world.CreateStaticBody()
     ground_body.CreateFixture(
         shape=chainShape(vertices=dense_points),

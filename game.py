@@ -7,15 +7,16 @@ def draw_body(body, color, offset_x):
     SCALE = 20
     if body.userData and "points" in body.userData:
         terrain_points = body.userData["points"]
-        line_points = []
-        for (x,y) in terrain_points:
+        polygon_points = []
+        for (x, y) in terrain_points:
             px = x * SCALE - offset_x
-            py = HEIGHT - (y * SCALE)
-            line_points.append((px, py))
-        # Rysujemy linię terenu
-        pygame.draw.lines(screen, color, False, line_points, 3)
+            py = HEIGHT - y * SCALE
+            polygon_points.append((px, py))
+        polygon_points.append((terrain_points[-1][0] * SCALE - offset_x, HEIGHT))
+        polygon_points.append((terrain_points[0][0] * SCALE - offset_x, HEIGHT))
+
+        pygame.draw.polygon(screen, GROUND_COLOR, polygon_points)
     else:
-        # Rysowanie innych ciał (auto, koła, kierowca)
         for fixture in body.fixtures:
             shape = fixture.shape
             if isinstance(shape, polygonShape):
@@ -36,6 +37,8 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
     clock = pygame.time.Clock()
     offset_x = 0
     running = True
+    for body in world.bodies:
+        print(f"Body: {body}, Position: {body.position}, Type: {body.type}")
 
     while running:
         screen.fill(WHITE)
@@ -59,6 +62,7 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
         offset_x = car_body.position[0]*20 - WIDTH / 2
 
         world.Step(1/60, 6, 2)
+
 
         if contact_listener.game_over:
             print("Game Over!")
