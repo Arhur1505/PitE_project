@@ -37,9 +37,6 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
     clock = pygame.time.Clock()
     offset_x = 0
     running = True
-    for body in world.bodies:
-        print(f"Body: {body}, Position: {body.position}, Type: {body.type}")
-
     while running:
         screen.fill(WHITE)
 
