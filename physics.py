@@ -7,7 +7,7 @@ import numpy as np
 def create_world():
     physics_world = world(gravity=(0, -10), doSleep=True)
 
-    start_x = 0
+    start_x = -10
     end_x = 1000
     base_height = 5
     amplitude = 5
