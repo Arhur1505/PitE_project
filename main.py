@@ -3,6 +3,7 @@ from car import create_car
 from game import game_loop
 from Box2D.b2 import contactListener
 
+
 class GameContactListener(contactListener):
     def __init__(self):
         contactListener.__init__(self)
@@ -12,8 +13,9 @@ class GameContactListener(contactListener):
         body_a = contact.fixtureA.body
         body_b = contact.fixtureB.body
         if (getattr(body_a, 'userData', None) == "driver" and body_b.type == 0) or \
-           (getattr(body_b, 'userData', None) == "driver" and body_a.type == 0):
+                (getattr(body_b, 'userData', None) == "driver" and body_a.type == 0):
             self.game_over = True
+
 
 if __name__ == "__main__":
     world, ground_body = create_world()

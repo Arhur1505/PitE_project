@@ -29,19 +29,18 @@ class HillClimbEnv(gym.Env):
 
         self.clock = pygame.time.Clock()
         self.offset_x = 0
-        self.episode_rewards = []  # Przechowujemy wyniki epizodów
+        self.episode_rewards = []
         self.current_reward = 0
 
-        # Inicjalizacja dodatkowych zmiennych
-        self.gas_cooldown = 0  # Licznik opóźnienia gazu
-        self.gas_streak = 0  # Licznik ciągłego gazowania
+        self.gas_cooldown = 0
+        self.gas_streak = 0
 
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("Hill Climb Racing RL")
         self.is_rendering = False
 
-    def reset(self):
+    def reset(self, **kwargs):
         self.world, self.ground_body = create_world()
         self.car_body, self.wheel1, self.wheel2, self.driver_body, self.joint1, self.joint2 = create_car(self.world)
 
@@ -50,56 +49,67 @@ class HillClimbEnv(gym.Env):
         self.current_reward = 0
         self.last_x = 0
 
-        # Resetujemy zmienne pomocnicze
         self.gas_cooldown = 0
         self.gas_streak = 0
 
-        return self._get_observation()
+        observation = self._get_observation()
+
+        return observation
 
     def step(self, action):
         self.current_step += 1
 
-        # Sprawdź, czy pojazd dotyka ziemi
         touching_ground = self._is_touching_ground()
 
-        # Opóźnienie gazu po lądowaniu
         if touching_ground:
-            self.gas_cooldown = 0  # Reset cooldown, jeśli pojazd dotyka ziemi
+            self.gas_cooldown = 0
         else:
             self.gas_cooldown += 1
 
-        # Ustal prędkość kół w zależności od wybranej akcji
-        if action == 0:  # Brak akcji
+        optimal_slope = self._calculate_ground_slope()
+        current_angle = self.car_body.angle
+        angle_diff = abs(current_angle - optimal_slope)
+
+        if np.pi / 2 - 0.1 <= abs(current_angle) <= np.pi / 2 + 0.1:
+            self.current_reward += 5.0
+            if current_angle > 0:
+                action = 2
+            else:
+                action = 1
+
+        if angle_diff > np.pi / 6:
+            if current_angle > optimal_slope:
+                action = 2
+            elif current_angle < optimal_slope:
+                action = 1
+
+        if action == 0:
             self.joint1.motorSpeed = 0.0
             self.joint2.motorSpeed = 0.0
-            self.gas_streak = 0  # Resetuj licznik gazu
-        elif action == 1 and touching_ground and self.gas_cooldown <= 5:  # Jedź w prawo
+            self.gas_streak = 0
+        elif action == 1 and touching_ground and self.gas_cooldown <= 5:
             self.joint1.motorSpeed = -30.0
             self.joint2.motorSpeed = -30.0
             self.gas_streak += 1
-        elif action == 2 and touching_ground and self.gas_cooldown <= 5:  # Jedź w lewo
+        elif action == 2 and touching_ground and self.gas_cooldown <= 5:
             self.joint1.motorSpeed = 30.0
             self.joint2.motorSpeed = 30.0
             self.gas_streak += 1
-        else:  # Wymuszony reset gazu w przypadku cooldownu
+        else:
             self.joint1.motorSpeed = 0.0
             self.joint2.motorSpeed = 0.0
             self.gas_streak = 0
 
-        # Kara za zbyt długie gazowanie
         if self.gas_streak > 50:
             self.current_reward -= 10.0
 
-        # Wykonaj krok symulacji fizyki
         self.world.Step(1 / 60, 6, 2)
 
-        # Obserwacje
         obs = self._get_observation()
 
-        # Nagrody
         reward = 0.0
 
-        # 1. **Nagroda za poruszanie się do przodu**
+        # 1. Reward for moving forward
         current_x = self.car_body.position[0]
         delta_x = current_x - self.last_x
         self.last_x = current_x
@@ -107,52 +117,98 @@ class HillClimbEnv(gym.Env):
         if delta_x > 0:
             reward += delta_x * 10.0
 
-        # 2. **Nagroda za stabilność**
-        angle = abs(self.car_body.angle)
-        if angle <= np.pi / 12:  # 15 stopni
+        # 2. Reward for stability relative to terrain slope
+        if angle_diff <= np.pi / 12:
             reward += 10.0
-        elif angle <= np.pi / 6:  # 30 stopni
+        elif angle_diff <= np.pi / 6:
             reward += 5.0
+        else:
+            reward -= angle_diff * 2.0
 
-        # 3. **Nagroda za prędkość**
+        # 3. Reward for maintaining optimal speed
         current_speed = self.car_body.linearVelocity[0]
         target_speed = 5.0
         speed_diff = abs(current_speed - target_speed)
-        if 4.0 <= current_speed <= 6.0:  # Optymalna prędkość
+        if 4.0 <= current_speed <= 6.0:
             reward += 15.0
         else:
             reward += max(0, 10.0 - speed_diff)
 
-        # 4. **Nagroda za dłuższą jazdę bez błędów**
+        # 4. Reward for consistent driving without errors
         if self.current_step % 50 == 0:
             reward += 10.0
 
-        # 5. **Kary**
-        if not touching_ground:  # Kara za bycie w powietrzu
+        # 5. Penalties
+        if not touching_ground:
             reward -= 2.0
-        if self.car_body.position[1] < 0:  # Spadek poniżej poziomu terenu
+        if self.car_body.position[1] < 0:
             reward -= 100.0
 
-        # Suma nagród
+        # 6. Reward for recovering from a near 90-degree tilt
+        if np.pi / 2 - 0.1 <= abs(current_angle) <= np.pi / 2 + 0.1 and abs(angle_diff) <= np.pi / 12:
+            reward += 50.0
+
         self.current_reward += reward
 
-        # Sprawdzenie, czy epizod się kończy
         done = self._is_done()
 
-        # Maksymalna liczba kroków
         if self.current_step >= self.max_steps:
             done = True
 
-        # Zapis wyników po zakończeniu epizodu
         if done:
             self.episode_rewards.append(self.current_reward)
             self._save_results()
 
-        # Debugowanie
         if self.debug:
             print(f"Step: {self.current_step}, Reward: {reward:.2f}, Total Reward: {self.current_reward:.2f}")
 
         return obs, reward, done, {}
+
+    def _calculate_ground_slope(self):
+        if not self._is_touching_ground():
+            return 0.0
+
+        terrain_points = self.ground_body.userData.get("points", [])
+        if not terrain_points:
+            return 0.0
+
+        wheel1_pos = self.wheel1.position
+        wheel2_pos = self.wheel2.position
+
+        car_pos = self.car_body.position
+
+        def find_closest_point(x_pos):
+            return min(terrain_points, key=lambda p: abs(p[0] - x_pos))
+
+        closest_wheel1 = find_closest_point(wheel1_pos[0])
+        closest_wheel2 = find_closest_point(wheel2_pos[0])
+        closest_car = find_closest_point(car_pos[0])
+
+        wheel_ground_slope = np.arctan2(
+            closest_wheel2[1] - closest_wheel1[1],
+            closest_wheel2[0] - closest_wheel1[0]
+        )
+
+        car_ground_slope = np.arctan2(
+            closest_car[1] - closest_wheel1[1],
+            closest_car[0] - closest_wheel1[0]
+        )
+
+        average_ground_slope = (wheel_ground_slope + car_ground_slope) / 2
+
+        car_angle = self.car_body.angle
+
+        level_diff = abs(car_angle)
+
+        slope_diff = abs(car_angle - average_ground_slope)
+
+        if slope_diff < level_diff and slope_diff < np.pi / 6:
+            return average_ground_slope
+
+        if level_diff > np.pi / 3:
+            return 0.0
+
+        return average_ground_slope
 
     def _is_touching_ground(self):
         for contact_edge in self.wheel1.contacts:
@@ -164,9 +220,9 @@ class HillClimbEnv(gym.Env):
         return False
 
     def _save_results(self):
-        with open("results.pkl", "wb") as f:
+        with open("results.pkl", "ab") as f:
             pickle.dump(self.episode_rewards, f)
-        print(f"Wyniki zapisane: {self.episode_rewards}")
+        print(f"Results saved: {self.episode_rewards}")
 
     def render(self, mode="human"):
         if mode == "human":
@@ -197,6 +253,7 @@ class HillClimbEnv(gym.Env):
     def _is_done(self):
         if self.driver_body.position[1] < 0:
             return True
-        if abs(self.car_body.angle) > np.pi / 2:
+        if abs(self.car_body.angle) >= np.pi / 2:
+            self.current_reward -= 50.0
             return True
         return False

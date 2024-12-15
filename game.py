@@ -1,6 +1,7 @@
 import pygame
 from settings import screen, WIDTH, HEIGHT, WHITE, GROUND_COLOR, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, BLACK
 
+
 def draw_body(body, color, offset_x):
     from Box2D.b2 import polygonShape, circleShape, chainShape
 
@@ -23,15 +24,16 @@ def draw_body(body, color, offset_x):
                 vertices = [(body.transform * v) for v in shape.vertices]
                 transformed = []
                 for v in vertices:
-                    px = v[0]*SCALE - offset_x
-                    py = HEIGHT - v[1]*SCALE
+                    px = v[0] * SCALE - offset_x
+                    py = HEIGHT - v[1] * SCALE
                     transformed.append((px, py))
                 pygame.draw.polygon(screen, color, transformed)
             elif isinstance(shape, circleShape):
                 position = body.transform * shape.pos
-                px = position[0]*SCALE - offset_x
-                py = HEIGHT - position[1]*SCALE
-                pygame.draw.circle(screen, color, (int(px), int(py)), int(shape.radius*SCALE))
+                px = position[0] * SCALE - offset_x
+                py = HEIGHT - position[1] * SCALE
+                pygame.draw.circle(screen, color, (int(px), int(py)), int(shape.radius * SCALE))
+
 
 def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints, contact_listener):
     clock = pygame.time.Clock()
@@ -55,10 +57,9 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
             joints[0].motorSpeed = 0.0
             joints[1].motorSpeed = 0.0
 
-        offset_x = car_body.position[0]*20 - WIDTH / 2
+        offset_x = car_body.position[0] * 20 - WIDTH / 2
 
-        world.Step(1/60, 6, 2)
-
+        world.Step(1 / 60, 6, 2)
 
         if contact_listener.game_over:
             print("Game Over!")

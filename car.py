@@ -1,5 +1,6 @@
 from Box2D.b2 import polygonShape, circleShape
 
+
 def create_car(world):
     # Podnieś pojazd wyżej, np. na y=20
     car_body = world.CreateDynamicBody(position=(5, 20))
