@@ -4,17 +4,18 @@ import math
 from noise import pnoise1
 import numpy as np
 
+
 def create_world():
     physics_world = world(gravity=(0, -10), doSleep=True)
 
-    start_x = 0
+    start_x = -10
     end_x = 1000
     base_height = 5
     amplitude = 5
     frequency = 0.022
 
     step = 0.2
-    x_values = np.arange(start_x, end_x+step, step)
+    x_values = np.arange(start_x, end_x + step, step)
 
     dense_points = []
     for x in x_values:
@@ -29,7 +30,7 @@ def create_world():
     n = len(dense_points)
 
     while i < n:
-        segment_points = dense_points[i:i+max_vertices]
+        segment_points = dense_points[i:i + max_vertices]
         if len(segment_points) < 2:
             break
 
