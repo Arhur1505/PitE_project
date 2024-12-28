@@ -1,6 +1,6 @@
 import pickle
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import numpy as np
 from car import create_car
 from physics import create_world
@@ -54,7 +54,7 @@ class HillClimbEnv(gym.Env):
 
         observation = self._get_observation()
 
-        return observation
+        return observation, {}
 
     def step(self, action):
         self.current_step += 1
@@ -83,22 +83,44 @@ class HillClimbEnv(gym.Env):
             elif current_angle < optimal_slope:
                 action = 1
 
-        if action == 0:
-            self.joint1.motorSpeed = 0.0
-            self.joint2.motorSpeed = 0.0
+        # ---------------------------------------------------------
+        # [ADDED] - Blok "anty-flip"
+        #   Jeśli auto zbliża się do zbyt dużego kąta (np. > 35 stopni),
+        #   wymuszamy hamowanie lub jazdę do tyłu, żeby się nie przekręciło.
+        #   (Możesz dostosować 0.61 rad ~ 35 stopni)
+        if abs(current_angle) > 0.61:
+            # hamowanie w drugą stronę
+            # Tutaj minus = jazda w "przód", plus = jazda w "tył" (zależnie od układu)
+            if current_angle > 0:
+                self.joint1.motorSpeed = 30.0  # Ratujemy się jazdą do tyłu
+                self.joint2.motorSpeed = 30.0
+            else:
+                self.joint1.motorSpeed = -30.0
+                self.joint2.motorSpeed = -30.0
+            # Wyzeruj gas_streak, żeby nie penalizować nas
             self.gas_streak = 0
-        elif action == 1 and touching_ground and self.gas_cooldown <= 5:
-            self.joint1.motorSpeed = -30.0
-            self.joint2.motorSpeed = -30.0
-            self.gas_streak += 1
-        elif action == 2 and touching_ground and self.gas_cooldown <= 5:
-            self.joint1.motorSpeed = 30.0
-            self.joint2.motorSpeed = 30.0
-            self.gas_streak += 1
         else:
-            self.joint1.motorSpeed = 0.0
-            self.joint2.motorSpeed = 0.0
-            self.gas_streak = 0
+            # [ORIGINAL] - obsługa akcji
+            if action == 0:
+                self.joint1.motorSpeed = 0.0
+                self.joint2.motorSpeed = 0.0
+                self.gas_streak = 0
+
+            elif action == 1 and touching_ground and self.gas_cooldown <= 5:
+                self.joint1.motorSpeed = -30.0
+                self.joint2.motorSpeed = -30.0
+                self.gas_streak += 1
+
+            elif action == 2 and touching_ground and self.gas_cooldown <= 5:
+                self.joint1.motorSpeed = 30.0
+                self.joint2.motorSpeed = 30.0
+                self.gas_streak += 1
+
+            else:
+                self.joint1.motorSpeed = 0.0
+                self.joint2.motorSpeed = 0.0
+                self.gas_streak = 0
+        # ---------------------------------------------------------
 
         if self.gas_streak > 50:
             self.current_reward -= 10.0
@@ -119,9 +141,9 @@ class HillClimbEnv(gym.Env):
 
         # 2. Reward for stability relative to terrain slope
         if angle_diff <= np.pi / 12:
-            reward += 10.0
+            reward += 75.0
         elif angle_diff <= np.pi / 6:
-            reward += 5.0
+            reward += 37.5
         else:
             reward -= angle_diff * 2.0
 
@@ -146,14 +168,16 @@ class HillClimbEnv(gym.Env):
 
         # 6. Reward for recovering from a near 90-degree tilt
         if np.pi / 2 - 0.1 <= abs(current_angle) <= np.pi / 2 + 0.1 and abs(angle_diff) <= np.pi / 12:
-            reward += 50.0
+            reward += 100.0
 
         self.current_reward += reward
 
         done = self._is_done()
+        truncated = False
 
         if self.current_step >= self.max_steps:
             done = True
+            truncated = True
 
         if done:
             self.episode_rewards.append(self.current_reward)
@@ -162,7 +186,7 @@ class HillClimbEnv(gym.Env):
         if self.debug:
             print(f"Step: {self.current_step}, Reward: {reward:.2f}, Total Reward: {self.current_reward:.2f}")
 
-        return obs, reward, done, {}
+        return obs, reward, done, truncated, {}
 
     def _calculate_ground_slope(self):
         if not self._is_touching_ground():
@@ -253,7 +277,13 @@ class HillClimbEnv(gym.Env):
     def _is_done(self):
         if self.driver_body.position[1] < 0:
             return True
+
+        if abs(self.car_body.angle) >= np.pi / 3:
+            self.current_reward -= 200.0
+            return True
+
         if abs(self.car_body.angle) >= np.pi / 2:
             self.current_reward -= 50.0
             return True
+
         return False

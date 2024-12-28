@@ -9,7 +9,7 @@ class GameContactListener(contactListener):
         contactListener.__init__(self)
         self.game_over = False
 
-    def BeginContact(self, contact):
+    def begin_contact(self, contact):
         body_a = contact.fixtureA.body
         body_b = contact.fixtureB.body
         if (getattr(body_a, 'userData', None) == "driver" and body_b.type == 0) or \
