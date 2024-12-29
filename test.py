@@ -2,7 +2,7 @@ from stable_baselines3 import PPO
 from hill_climb_env import HillClimbEnv
 
 env = HillClimbEnv(max_steps=10000, debug=False)
-model = PPO.load("ppo_hill_climb.zip")
+model = PPO.load("quick_ppo_hill_climb.zip")
 
 obs, info = env.reset()
 done = False
