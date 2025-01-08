@@ -6,7 +6,6 @@ from hill_climb_env import HillClimbEnv
 def make_env():
     return HillClimbEnv(max_steps=5000, debug=False)
 
-
 env = DummyVecEnv([make_env])
 
 model = PPO(
