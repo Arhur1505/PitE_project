@@ -4,7 +4,6 @@ import math
 from noise import pnoise1
 import numpy as np
 
-
 def create_world():
     physics_world = world(gravity=(0, -10), doSleep=True)
 
