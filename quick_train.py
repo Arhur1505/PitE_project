@@ -1,23 +1,44 @@
-from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import EvalCallback
 from hill_climb_env import HillClimbEnv
+from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import DummyVecEnv
 
+if __name__ == "__main__":
+    env = Monitor(HillClimbEnv(max_steps=1000, debug=False))
+    env = DummyVecEnv([lambda: env])
 
-def make_env():
-    return HillClimbEnv(max_steps=5000, debug=False)
+    eval_env = Monitor(HillClimbEnv(max_steps=1000, debug=False))
+    eval_env = DummyVecEnv([lambda: eval_env])
 
+    eval_callback = EvalCallback(
+        eval_env,
+        best_model_save_path="./logs/best_model/",
+        log_path="./logs/",
+        eval_freq=5000,
+        deterministic=True,
+        render=False,
+    )
 
-env = DummyVecEnv([make_env])
+    model = PPO(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        device="cpu",
+        n_steps=4096,
+        batch_size=512,
+        learning_rate=0.0003,
+        policy_kwargs=dict(
+            net_arch=[256, 256]
+        ),
+        tensorboard_log="./ppo_tensorboard/"
+    )
 
-model = PPO(
-    "MlpPolicy",
-    env,
-    verbose=1,
-    n_steps=512,
-    batch_size=32,
-    gamma=0.95,
-    learning_rate=0.001,
-)
+    model.learn(total_timesteps=1000000, callback=eval_callback)
 
-model.learn(total_timesteps=50000)
-model.save("quick_ppo_hill_climb")
+    model.save("quick_ppo_hill_climb")
+
+    print("Trening zakończony. Model zapisany.")
+
+    # Uruchom TensorBoard poleceniem w terminalu:
+    # tensorboard --logdir=./ppo_tensorboard/
