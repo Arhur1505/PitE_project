@@ -20,14 +20,12 @@ class HillClimbEnv(gym.Env):
         self.world, self.ground_body = create_world()
         self.car_body, self.wheel1, self.wheel2, self.driver_body, self.joint1, self.joint2 = create_car(self.world)
 
-        # Ciągła przestrzeń akcji: sterowanie dla dwóch kół
         self.action_space = spaces.Box(
-            low=np.array([-1.0, -1.0]),  # Minimalna wartość akcji
-            high=np.array([1.0, 1.0]),  # Maksymalna wartość akcji
+            low=np.array([-1.0, -1.0]),
+            high=np.array([1.0, 1.0]),
             dtype=np.float32
         )
 
-        # Przestrzeń obserwacji
         self.observation_space = spaces.Box(
             low=np.array([-np.inf] * 6),
             high=np.array([np.inf] * 6),
@@ -54,29 +52,25 @@ class HillClimbEnv(gym.Env):
         self.last_x = 0
 
         observation = self._get_observation()
-        info = {}  # Dodaj pusty słownik jako informację dodatkową
+        info = {}
         return observation, info
 
     def step(self, action):
         self.current_step += 1
 
-        # Przekształcenie akcji do prędkości silników kół
-        motor_speed1 = action[0] * 30.0  # Akcja przeskalowana do prędkości
+        motor_speed1 = action[0] * 30.0
         motor_speed2 = action[1] * 30.0
         self.joint1.motorSpeed = motor_speed1
         self.joint2.motorSpeed = motor_speed2
 
-        # Aktualizacja świata fizyki
         self.world.Step(1 / 60, 6, 2)
 
         obs = self._get_observation()
         reward = self._calculate_reward()
         done = self._is_done()
 
-        # Nowy element: truncated - czy epizod zakończył się z innych powodów niż done
         truncated = self.current_step >= self.max_steps
 
-        # Puste pole info
         info = {}
 
         if done or truncated:
@@ -86,43 +80,49 @@ class HillClimbEnv(gym.Env):
         if self.debug:
             print(f"Step: {self.current_step}, Reward: {reward:.2f}, Total Reward: {self.current_reward:.2f}")
 
-        # Zwróć 5 elementów
         return obs, reward, done, truncated, info
 
     def _calculate_reward(self):
         reward = 0.0
 
-        # Nagroda za poruszanie się do przodu
+        # 1. Nagroda za poruszanie się do przodu
         current_x = self.car_body.position[0]
         delta_x = current_x - self.last_x
         self.last_x = current_x
 
         if delta_x > 0:
-            reward += delta_x * 20.0  # Zwiększona nagroda za pokonywanie dystansu
+            reward += delta_x * 30.0  # Większa nagroda za pokonywanie dystansu
 
-        # Kara za zbyt niską prędkość
+        # Dodatkowa nagroda za osiąganie punktów kontrolnych
+        checkpoint_distance = 100
+        if int(current_x) % checkpoint_distance == 0:
+            reward += 50.0
+
+        # 2. Kara za zbyt niską prędkość
         current_speed = self.car_body.linearVelocity[0]
         if current_speed < 2.0:
-            reward -= 10.0  # Kara za zatrzymywanie się lub zbyt wolny ruch
+            reward -= 15.0  # Większa kara za zatrzymywanie się
 
-        # Nagroda za utrzymanie wysokiej prędkości
-        target_speed = 8.0  # Podnieś docelową prędkość
+        # Nagroda za utrzymanie optymalnej prędkości
+        target_speed = 8.0
         speed_diff = abs(current_speed - target_speed)
-        if current_speed >= 6.0:
-            reward += 20.0  # Zachęta za przekroczenie prędkości progowej
-        else:
-            reward += max(0, 10.0 - speed_diff)  # Mniejsza nagroda dla mniejszych prędkości
+        if 6.0 <= current_speed <= 10.0:
+            reward += 30.0 - speed_diff  # Stabilna nagroda za optymalną prędkość
+        elif current_speed > 12.0:
+            reward -= 5.0 * (current_speed - 12.0)  # Kara za zbyt dużą prędkość
 
-        # Kara za przechylenie pojazdu
+        # 3. Kara za przechylenie pojazdu
         angle = abs(self.car_body.angle)
-        if angle > np.pi / 6:  # Łagodniejszy limit kąta
-            reward -= 15.0  # Zwiększona kara za niestabilność
+        if angle > np.pi / 6:  # Większa kara dla większych kątów
+            reward -= 20.0 + 10.0 * (angle - np.pi / 6)
         elif angle > np.pi / 12:
-            reward -= 5.0  # Łagodniejsza kara dla mniejszych kątów
+            reward -= 10.0  # Kara za umiarkowaną niestabilność
+        else:
+            reward += 10.0  # Nagroda za bardzo stabilną jazdę
 
-        # Nagroda za utrzymanie stabilności w szybkim ruchu
+        # 4. Nagroda za stabilność w szybkim ruchu
         if delta_x > 0 and current_speed >= 6.0 and angle < np.pi / 12:
-            reward += 30.0  # Duża nagroda za stabilność przy szybkiej jeździe
+            reward += 50.0  # Nagroda za stabilność przy szybkiej jeździe
 
         self.current_reward += reward
         return reward
@@ -135,7 +135,6 @@ class HillClimbEnv(gym.Env):
         return np.array([car_pos[0], car_pos[1], car_vel[0], car_vel[1], wheel_angle1, wheel_angle2], dtype=np.float32)
 
     def _is_done(self):
-        # Zakończ, jeśli samochód upadnie lub osiągnie limit kroków
         if self.car_body.position[1] < 0 or abs(self.car_body.angle) > np.pi / 2:
             return True
         return False

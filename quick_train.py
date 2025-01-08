@@ -35,8 +35,8 @@ if __name__ == "__main__":
         tensorboard_log="./ppo_tensorboard/"
     )
 
-    model.learn(total_timesteps=500000, callback=eval_callback)
+    model.learn(total_timesteps=250000, callback=eval_callback)
 
-    model.save("quick_ppo_hill_climb")
+    model.save("ppo_hill_climb")
 
     print("Trening zakończony. Model zapisany.")
