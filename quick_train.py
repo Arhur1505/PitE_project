@@ -15,7 +15,7 @@ if __name__ == "__main__":
         eval_env,
         best_model_save_path="./logs/best_model/",
         log_path="./logs/",
-        eval_freq=5000,
+        eval_freq=10000,
         deterministic=True,
         render=False,
     )
@@ -25,19 +25,18 @@ if __name__ == "__main__":
         env,
         verbose=1,
         device="cpu",
-        n_steps=4096,
-        batch_size=512,
-        learning_rate=0.0003,
+        n_steps=8192,
+        batch_size=1024,
+        learning_rate=0.0001,
+        ent_coef=0.01,
         policy_kwargs=dict(
-            net_arch=[256, 256]
+            net_arch=[128, 128]
         ),
         tensorboard_log="./ppo_tensorboard/"
     )
 
-    model.learn(total_timesteps=1000000, callback=eval_callback)
+    model.learn(total_timesteps=500000, callback=eval_callback)
 
     model.save("quick_ppo_hill_climb")
 
     print("Trening zakończony. Model zapisany.")
-
-    # tensorboard --logdir=./ppo_tensorboard/
