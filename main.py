@@ -3,7 +3,6 @@ from car import create_car
 from game import game_loop
 from Box2D.b2 import contactListener
 
-
 class GameContactListener(contactListener):
     def __init__(self):
         contactListener.__init__(self)

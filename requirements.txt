@@ -1,7 +1,7 @@
-Box2D~=2.3.10
-pygame~=2.5.0
-stable_baselines3~=2.5.0a1
 numpy~=1.26.4
+pygame~=2.5.0
+Box2D~=2.3.10
+stable_baselines3~=2.5.0a1
+gymnasium~=1.0.0
 noise~=1.2.2
 matplotlib~=3.7.1
-gymnasium~=1.0.0

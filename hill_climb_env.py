@@ -29,7 +29,7 @@ class HillClimbEnv(gym.Env):
 
         # Przestrzeń obserwacji
         self.observation_space = spaces.Box(
-            low=np.array([-np.inf] * 6),  # Pozycja, prędkość, kąty itp.
+            low=np.array([-np.inf] * 6),
             high=np.array([np.inf] * 6),
             dtype=np.float32
         )

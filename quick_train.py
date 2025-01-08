@@ -40,5 +40,4 @@ if __name__ == "__main__":
 
     print("Trening zakończony. Model zapisany.")
 
-    # Uruchom TensorBoard poleceniem w terminalu:
     # tensorboard --logdir=./ppo_tensorboard/
