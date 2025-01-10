@@ -1,11 +1,29 @@
 import Box2D
 from Box2D.b2 import world, staticBody, polygonShape
-import math
 from noise import pnoise1
 import numpy as np
 
+class CustomContactListener(Box2D.b2.contactListener):
+    def __init__(self):
+        super().__init__()
+        self.contacts = {}
+
+    def BeginContact(self, contact):
+        self.contacts[contact.fixtureA] = True
+        self.contacts[contact.fixtureB] = True
+
+    def EndContact(self, contact):
+        self.contacts[contact.fixtureA] = False
+        self.contacts[contact.fixtureB] = False
+
+    def is_touching(self, fixture):
+        return self.contacts.get(fixture, False)
+
 def create_world():
     physics_world = world(gravity=(0, -10), doSleep=True)
+
+    contact_listener = CustomContactListener()
+    physics_world.contactListener = contact_listener
 
     start_x = -10
     end_x = 1000
@@ -15,12 +33,10 @@ def create_world():
 
     step = 0.2
     x_values = np.arange(start_x, end_x + step, step)
-
-    dense_points = []
-    for x in x_values:
-        noise_val = pnoise1(x * frequency + 0.25)
-        y = base_height + noise_val * amplitude
-        dense_points.append((float(x), float(y)))
+    dense_points = [
+        (float(x), float(base_height + pnoise1(x * frequency + 0.25) * amplitude))
+        for x in x_values
+    ]
 
     ground_body = physics_world.CreateStaticBody()
 
@@ -46,13 +62,8 @@ def create_world():
             friction=0.6,
             restitution=0.2
         )
-
         i += max_vertices
 
-    ground_body.userData = {
-        "points": dense_points,
-        "start_x": start_x,
-        "end_x": end_x
-    }
+    ground_body.userData = {"points": dense_points}
 
     return physics_world, ground_body
