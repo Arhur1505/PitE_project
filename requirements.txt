@@ -5,4 +5,3 @@ stable_baselines3~=2.5.0a1
 gymnasium~=1.0.0
 noise~=1.2.2
 matplotlib~=3.7.1
-gym~=0.26.2

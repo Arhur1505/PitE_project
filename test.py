@@ -2,17 +2,17 @@ from stable_baselines3 import PPO
 from hill_climb_env import HillClimbEnv
 
 env = HillClimbEnv(max_steps=10000, debug=False)
-model = PPO.load("quick_ppo_hill_climb.zip")
 
-obs = env.reset()
-done = False
-total_reward = 0
+model = PPO.load("logs/best_model/best_model.zip")
 
-print("Starting the testing of the trained agent...")
+obs, info = env.reset()
+terminated = False
+truncated = False
+total_reward = 0.0
 
-while not done:
-    action, _ = model.predict(obs)
-    obs, reward, done, info = env.step(action)
+while not (terminated or truncated):
+    action, _ = model.predict(obs, deterministic=True)
+    obs, reward, terminated, truncated, info = env.step(action)
     env.render()
     total_reward += reward
 

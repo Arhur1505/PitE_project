@@ -1,12 +1,12 @@
-import pickle
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import numpy as np
+import pygame
 from car import create_car
 from physics import create_world
 from game import draw_body
 from settings import WIDTH, HEIGHT, WHITE, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, GROUND_COLOR
-import pygame
+
 
 class HillClimbEnv(gym.Env):
     def __init__(self, max_steps=1000, debug=False):
@@ -17,9 +17,17 @@ class HillClimbEnv(gym.Env):
 
         self.last_x = 0
         self.world, self.ground_body = create_world()
-        self.car_body, self.wheel1, self.wheel2, self.driver_body, self.joint1, self.joint2 = create_car(self.world)
+        (
+            self.car_body,
+            self.wheel1,
+            self.wheel2,
+            self.driver_body,
+            self.joint1,
+            self.joint2
+        ) = create_car(self.world)
 
         self.action_space = spaces.Discrete(3)
+
         self.observation_space = spaces.Box(
             low=np.array([-np.inf] * 6),
             high=np.array([np.inf] * 6),
@@ -41,9 +49,17 @@ class HillClimbEnv(gym.Env):
         pygame.display.set_caption("Hill Climb Racing RL")
         self.is_rendering = False
 
-    def reset(self, **kwargs):
+    def reset(self, *, seed=None, options=None):
+        super().reset(seed=seed)
         self.world, self.ground_body = create_world()
-        self.car_body, self.wheel1, self.wheel2, self.driver_body, self.joint1, self.joint2 = create_car(self.world)
+        (
+            self.car_body,
+            self.wheel1,
+            self.wheel2,
+            self.driver_body,
+            self.joint1,
+            self.joint2
+        ) = create_car(self.world)
 
         self.offset_x = 0
         self.current_step = 0
@@ -54,8 +70,7 @@ class HillClimbEnv(gym.Env):
         self.gas_streak = 0
 
         observation = self._get_observation()
-
-        return observation
+        return observation, {}
 
     def step(self, action):
         self.current_step += 1
@@ -83,6 +98,13 @@ class HillClimbEnv(gym.Env):
                 action = 2
             elif current_angle < optimal_slope:
                 action = 1
+
+
+        current_speed = abs(self.car_body.linearVelocity[0])
+        if current_speed > 12.0:
+            if action == 1 or action == 2:
+                self.current_reward -= 5.0
+                action = 0
 
         if action == 0:
             self.joint1.motorSpeed = 0.0
@@ -113,7 +135,6 @@ class HillClimbEnv(gym.Env):
         current_x = self.car_body.position[0]
         delta_x = current_x - self.last_x
         self.last_x = current_x
-
         if delta_x > 0:
             reward += delta_x * 10.0
 
@@ -137,6 +158,7 @@ class HillClimbEnv(gym.Env):
 
         if not touching_ground:
             reward -= 2.0
+
         if self.car_body.position[1] < 0:
             reward -= 100.0
 
@@ -152,15 +174,49 @@ class HillClimbEnv(gym.Env):
 
         if done:
             self.episode_rewards.append(self.current_reward)
-            self._save_results()
 
         ground_slope = self._calculate_ground_slope()
         angle_diff = self._calculate_angle_diff()
 
-        return obs, reward, done, {
+        info = {
             "ground_slope": ground_slope,
             "angle_diff": angle_diff
         }
+
+        terminated = self._is_done()
+        truncated = False
+        if self.current_step >= self.max_steps:
+            truncated = True
+
+        return obs, reward, terminated, truncated, info
+
+    def render(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                raise SystemExit
+
+        self.screen.fill(WHITE)
+        self.offset_x = self.car_body.position[0] * 20 - WIDTH / 2
+
+        draw_body(self.ground_body, GROUND_COLOR, self.offset_x)
+        draw_body(self.car_body, CAR_COLOR, self.offset_x)
+        draw_body(self.wheel1, WHEEL_COLOR, self.offset_x)
+        draw_body(self.wheel2, WHEEL_COLOR, self.offset_x)
+        draw_body(self.driver_body, DRIVER_COLOR, self.offset_x)
+
+        car_pos = self.car_body.position
+        car_vel = self.car_body.linearVelocity
+        ground_slope = self._calculate_ground_slope()
+        angle_diff = self._calculate_angle_diff()
+
+        self._draw_text(f"Car Position: x={car_pos[0]:.2f}, y={car_pos[1]:.2f}", 10, 10)
+        self._draw_text(f"Car Velocity: x={car_vel[0]:.2f}, y={car_vel[1]:.2f}", 10, 30)
+        self._draw_text(f"Ground Slope: {ground_slope:.2f}", 10, 90)
+        self._draw_text(f"Angle Difference: {angle_diff:.2f}", 10, 110)
+
+        pygame.display.flip()
+        self.clock.tick(60)
 
     def _calculate_ground_slope(self):
         terrain_points = self.ground_body.userData.get("points", [])
@@ -173,11 +229,9 @@ class HillClimbEnv(gym.Env):
             return min(terrain_points, key=lambda p: abs(p[0] - x_pos))
 
         closest_point = find_closest_point(car_pos[0])
-
         left_point = find_closest_point(car_pos[0] - 1)
         right_point = find_closest_point(car_pos[0] + 1)
         ground_slope = np.arctan2(right_point[1] - left_point[1], right_point[0] - left_point[0])
-
         return ground_slope
 
     def _calculate_angle_diff(self):
@@ -194,42 +248,13 @@ class HillClimbEnv(gym.Env):
                 return True
         return False
 
-    def _save_results(self):
-        with open("results.pkl", "ab") as f:
-            pickle.dump(self.episode_rewards, f)
-
-    def render(self, mode="human"):
-        if mode == "human":
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-
-            self.screen.fill(WHITE)
-            self.offset_x = self.car_body.position[0] * 20 - WIDTH / 2
-
-            draw_body(self.ground_body, GROUND_COLOR, self.offset_x)
-            draw_body(self.car_body, CAR_COLOR, self.offset_x)
-            draw_body(self.wheel1, WHEEL_COLOR, self.offset_x)
-            draw_body(self.wheel2, WHEEL_COLOR, self.offset_x)
-            draw_body(self.driver_body, DRIVER_COLOR, self.offset_x)
-
-            car_pos = self.car_body.position
-            car_vel = self.car_body.linearVelocity
-            wheel_angle1 = self.joint1.angle
-            wheel_angle2 = self.joint2.angle
-            ground_slope = self._calculate_ground_slope()
-            angle_diff = self._calculate_angle_diff()
-
-            self._draw_text(f"Car Position: x={car_pos[0]:.2f}, y={car_pos[1]:.2f}", 10, 10)
-            self._draw_text(f"Car Velocity: x={car_vel[0]:.2f}, y={car_vel[1]:.2f}", 10, 30)
-            self._draw_text(f"Wheel 1 Angle: {wheel_angle1:.2f}", 10, 50)
-            self._draw_text(f"Wheel 2 Angle: {wheel_angle2:.2f}", 10, 70)
-            self._draw_text(f"Ground Slope: {ground_slope:.2f}", 10, 90)
-            self._draw_text(f"Angle Difference: {angle_diff:.2f}", 10, 110)
-
-            pygame.display.flip()
-            self.clock.tick(60)
+    def _is_done(self):
+        if self.driver_body.position[1] < 0:
+            return True
+        if abs(self.car_body.angle) >= np.pi / 2:
+            self.current_reward -= 50.0
+            return True
+        return False
 
     def _draw_text(self, text, x, y, color=(0, 0, 0)):
         text_surface = self.font.render(text, True, color)
@@ -240,12 +265,7 @@ class HillClimbEnv(gym.Env):
         car_vel = self.car_body.linearVelocity
         wheel_angle1 = self.joint1.angle
         wheel_angle2 = self.joint2.angle
-        return np.array([car_pos[0], car_pos[1], car_vel[0], car_vel[1], wheel_angle1, wheel_angle2], dtype=np.float32)
-
-    def _is_done(self):
-        if self.driver_body.position[1] < 0:
-            return True
-        if abs(self.car_body.angle) >= np.pi / 2:
-            self.current_reward -= 50.0
-            return True
-        return False
+        return np.array(
+            [car_pos[0], car_pos[1], car_vel[0], car_vel[1], wheel_angle1, wheel_angle2],
+            dtype=np.float32
+        )
