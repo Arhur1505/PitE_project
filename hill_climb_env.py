@@ -212,8 +212,8 @@ class HillClimbEnv(gym.Env):
 
         self._draw_text(f"Car Position: x={car_pos[0]:.2f}, y={car_pos[1]:.2f}", 10, 10)
         self._draw_text(f"Car Velocity: x={car_vel[0]:.2f}, y={car_vel[1]:.2f}", 10, 30)
-        self._draw_text(f"Ground Slope: {ground_slope:.2f}", 10, 90)
-        self._draw_text(f"Angle Difference: {angle_diff:.2f}", 10, 110)
+        self._draw_text(f"Ground Slope: {ground_slope:.2f}", 10, 50)
+        self._draw_text(f"Angle Difference: {angle_diff:.2f}", 10, 70)
 
         pygame.display.flip()
         self.clock.tick(60)

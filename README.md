@@ -16,16 +16,23 @@ The primary goal is to explore the intersection of game development and machine 
 
 ```
 .
-├── car.py                 # Handles car object creation and physics
-├── game.py                # Rendering logic for the game
-├── hill_climb_env.py      # Custom Gym environment for Hill Climb Racing
-├── physics.py             # Physics simulation and world creation
-├── settings.py            # Game settings and constants
-├── quick_train.py         # Script for training the RL agent
-├── test.py                # Script for testing the trained agent
-├── requirements.txt       # Python dependencies
-├── README.md              # Project documentation
-├── logs/                  # Directory for logs and best models
-├── ppo_tensorboard/       # Directory for TensorBoard logs
-└── quick_ppo_hill_climb.zip # Trained model
+├── car.py                  # Handles car object creation
+├── game.py                 # Rendering logic for the game
+├── hill_climb_env.py       # Custom Gym environment for Hill Climb Racing
+├── main.py                 # Main script to run the game
+├── physics.py              # Physics simulation and world creation
+├── settings.py             # Game settings and constants
+├── quick_train.py          # Script for training the RL agent
+├── test.py                 # Script for testing the trained agent
+├── requirements.txt        # Python dependencies
+├── README.md               # Project documentation
+├── logs/                   # Directory for logs and saved models
+│   ├── best_model/
+│       ├── best_model.zip  # Best-trained model
+│       └── evaluations.npz # Evaluation metrics of the model
+├── ppo_tensorboard/        # Directory for TensorBoard logs
+└── ppo_hill_climb.zip      # Trained PPO model
+
 ```
+
+---
