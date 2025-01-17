@@ -25,18 +25,49 @@ def create_world():
     contact_listener = CustomContactListener()
     physics_world.contactListener = contact_listener
 
-    start_x = -10
+    start_x = 0
     end_x = 1000
-    base_height = 5
-    amplitude = 5
-    frequency = 0.022
+    base_height = 4
+    amplitude = 6
+    frequency = 0.07
 
     step = 0.2
     x_values = np.arange(start_x, end_x + step, step)
-    dense_points = [
-        (float(x), float(base_height + pnoise1(x * frequency + 0.25) * amplitude))
-        for x in x_values
-    ]
+    dense_points = []
+    
+    ramp_array = []
+        
+    for value in x_values:
+        if value > 40 and value < 60:
+            # height = dense_points[-1][1] + 0.1
+            # ramp_array.append((value, height))
+            pass
+            
+        elif value > 70 and value < 90:
+            # height = ramp_array[-1][1]
+            # ramp_array.remove(ramp_array[-1])
+            pass
+        else:
+            height = base_height + pnoise1(value * frequency + 0.25) * amplitude
+        dense_points.append((float(value), float(height)))
+        
+    ramp_length = 50
+    ramp_height_increment = 0.1
+
+    for x in range(len(dense_points) - ramp_length):
+        if abs(dense_points[x][1] - dense_points[x + ramp_length][1]) < 0.001:
+            
+            for i in range(20):
+                new_height = dense_points[x][1] + ramp_height_increment * i
+                dense_points[x + i] = (dense_points[x + i][0], new_height)
+            
+            for i in range(20, 30):
+                new_height = 0
+                dense_points[x + i] = (dense_points[x + i][0], new_height)
+
+            for i in range(30, 50):
+                new_height = dense_points[x][1] - ramp_height_increment * (i - 29)
+                dense_points[x + i] = (dense_points[x + i][0], new_height)
 
     ground_body = physics_world.CreateStaticBody()
 
