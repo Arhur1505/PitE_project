@@ -1,5 +1,5 @@
 import Box2D
-from Box2D.b2 import world, staticBody, polygonShape
+from Box2D.b2 import world, staticBody, dynamicBody, polygonShape, circleShape
 from noise import pnoise1
 import numpy as np
 
@@ -34,40 +34,19 @@ def create_world():
     step = 0.2
     x_values = np.arange(start_x, end_x + step, step)
     dense_points = []
-    
     ramp_array = []
-        
+
     for value in x_values:
-        if value > 40 and value < 60:
-            # height = dense_points[-1][1] + 0.1
-            # ramp_array.append((value, height))
-            pass
+        if value > 45 and value < 70:
+            height = dense_points[-1][1] + 0.1
+            ramp_array.append((value, height))
             
-        elif value > 70 and value < 90:
-            # height = ramp_array[-1][1]
-            # ramp_array.remove(ramp_array[-1])
-            pass
+        elif value > 75 and value < 100:
+            height = ramp_array[-1][1]
+            ramp_array.remove(ramp_array[-1])
         else:
             height = base_height + pnoise1(value * frequency + 0.25) * amplitude
         dense_points.append((float(value), float(height)))
-        
-    ramp_length = 50
-    ramp_height_increment = 0.1
-
-    for x in range(len(dense_points) - ramp_length):
-        if abs(dense_points[x][1] - dense_points[x + ramp_length][1]) < 0.001:
-            
-            for i in range(20):
-                new_height = dense_points[x][1] + ramp_height_increment * i
-                dense_points[x + i] = (dense_points[x + i][0], new_height)
-            
-            for i in range(20, 30):
-                new_height = 0
-                dense_points[x + i] = (dense_points[x + i][0], new_height)
-
-            for i in range(30, 50):
-                new_height = dense_points[x][1] - ramp_height_increment * (i - 29)
-                dense_points[x + i] = (dense_points[x + i][0], new_height)
 
     ground_body = physics_world.CreateStaticBody()
 
@@ -97,4 +76,28 @@ def create_world():
 
     ground_body.userData = {"points": dense_points}
 
-    return physics_world, ground_body
+    box_position = (50, base_height + 5)
+    box_body = physics_world.CreateDynamicBody(
+        position=box_position,
+        fixtures=Box2D.b2FixtureDef(
+            shape=polygonShape(box=(1, 1)),
+            density=0.1,
+            friction=0.2,
+            restitution=0.1
+        )
+    )
+    box_body.userData = {"type": "pushable_object"}
+
+    ball_position = (60, base_height + 30)
+    ball_body = physics_world.CreateDynamicBody(
+        position=ball_position,
+        fixtures=Box2D.b2FixtureDef(
+            shape=circleShape(radius=1),
+            density=0.5,
+            friction=0.5,
+            restitution=0.8
+        )
+    )
+    ball_body.userData = {"type": "falling_ball"}
+
+    return physics_world, ground_body, box_body, ball_body

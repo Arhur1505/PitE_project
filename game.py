@@ -35,7 +35,7 @@ def draw_body(body, color, offset_x):
                 pygame.draw.circle(screen, color, (int(px), int(py)), int(shape.radius * SCALE))
 
 
-def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints, contact_listener):
+def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints, contact_listener, additional_bodies=[]):
     clock = pygame.time.Clock()
     offset_x = 0
     running = True
@@ -70,6 +70,9 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
         draw_body(wheel1, WHEEL_COLOR, offset_x)
         draw_body(wheel2, WHEEL_COLOR, offset_x)
         draw_body(driver_body, DRIVER_COLOR, offset_x)
+
+        for body in additional_bodies:
+            draw_body(body, BLACK, offset_x)
 
         distance = int(car_body.position[0])
         font = pygame.font.Font(None, 36)
