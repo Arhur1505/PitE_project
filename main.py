@@ -9,6 +9,7 @@ class GameContactListener(contactListener):
     Custom contact listener to detect collisions between the driver and ground.
     If a collision is detected, the game ends.
     """
+
     def __init__(self):
         contactListener.__init__(self)
         self.game_over = False
