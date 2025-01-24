@@ -2,11 +2,11 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import pygame
-from modules.car import create_car
-from modules.physics import create_world
-from modules.game import draw_body
-from modules.settings import WIDTH, HEIGHT, WHITE, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, GROUND_COLOR
 
+from modules.car import create_car
+from modules.physics import create_world, GameContactListener
+from modules.game import draw_body, check_game_over
+from modules.settings import WIDTH, HEIGHT, WHITE, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, GROUND_COLOR, MAP_MIN_Y, END_X
 
 class HillClimbEnv(gym.Env):
     def __init__(self, max_steps=1000, debug=False):
@@ -16,7 +16,7 @@ class HillClimbEnv(gym.Env):
         self.debug = debug
 
         self.last_x = 0
-        self.world, self.ground_body = create_world()
+        self.world, self.ground_body, _ = create_world()
         (
             self.car_body,
             self.wheel1,
@@ -26,8 +26,10 @@ class HillClimbEnv(gym.Env):
             self.joint2
         ) = create_car(self.world)
 
-        self.action_space = spaces.Discrete(3)
+        self.contact_listener = GameContactListener()
+        self.world.contactListener = self.contact_listener
 
+        self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(
             low=np.array([-np.inf] * 6),
             high=np.array([np.inf] * 6),
@@ -49,9 +51,21 @@ class HillClimbEnv(gym.Env):
         pygame.display.set_caption("Hill Climb Racing RL")
         self.is_rendering = False
 
+    def _is_driver_touching_ground(self) -> bool:
+        for contact_edge in self.driver_body.contacts:
+            if contact_edge.contact.touching:
+                body_a = contact_edge.contact.fixtureA.body
+                body_b = contact_edge.contact.fixtureB.body
+
+                if (body_a == self.driver_body and body_b.type == 0) or \
+                        (body_b == self.driver_body and body_a.type == 0):
+                    return True
+
+            return False
+
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
-        self.world, self.ground_body = create_world()
+        self.world, self.ground_body, _ = create_world()
         (
             self.car_body,
             self.wheel1,
@@ -68,6 +82,7 @@ class HillClimbEnv(gym.Env):
 
         self.gas_cooldown = 0
         self.gas_streak = 0
+        self.contact_listener.game_over = False
 
         observation = self._get_observation()
         return observation, {}
@@ -82,30 +97,26 @@ class HillClimbEnv(gym.Env):
         else:
             self.gas_cooldown += 1
 
-        optimal_slope = self._calculate_ground_slope()
+        # Nachylenie rampy i różnica kąta względem rampy
+        ground_slope = self._calculate_ground_slope()
         current_angle = self.car_body.angle
-        angle_diff = abs(current_angle - optimal_slope)
+        angle_diff = abs(current_angle - ground_slope)
 
-        if np.pi / 2 - 0.1 <= abs(current_angle) <= np.pi / 2 + 0.1:
-            self.current_reward += 5.0
-            if current_angle > 0:
-                action = 2
-            else:
-                action = 1
-
+        # Dynamiczne sterowanie
         if angle_diff > np.pi / 6:
-            if current_angle > optimal_slope:
-                action = 2
-            elif current_angle < optimal_slope:
-                action = 1
+            if current_angle > ground_slope:
+                action = 2  # Przyspieszenie do przodu
+            elif current_angle < ground_slope:
+                action = 1  # Przyspieszenie do tyłu
 
-
+        # Ogranicz prędkość i dodaj karę za nadmierną prędkość
         current_speed = abs(self.car_body.linearVelocity[0])
         if current_speed > 12.0:
-            if action == 1 or action == 2:
+            if action in [1, 2]:
                 self.current_reward -= 5.0
-                action = 0
+                action = 0  # Zatrzymanie
 
+        # Wykonanie akcji
         if action == 0:
             self.joint1.motorSpeed = 0.0
             self.joint2.motorSpeed = 0.0
@@ -124,71 +135,67 @@ class HillClimbEnv(gym.Env):
             self.gas_streak = 0
 
         if self.gas_streak > 50:
-            self.current_reward -= 10.0
+            self.current_reward -= 10.0  # Kara za zbyt długie przytrzymanie gazu
 
         self.world.Step(1 / 60, 6, 2)
 
+        # Obliczanie nagrody
         obs = self._get_observation()
-
         reward = 0.0
 
+        # Ruch w osi X
         current_x = self.car_body.position[0]
         delta_x = current_x - self.last_x
         self.last_x = current_x
+
+        if delta_x <= 0.1:
+            reward -= 10.0  # Kara za stagnację
+
         if delta_x > 0:
-            reward += delta_x * 10.0
+            reward += delta_x * 10.0  # Nagroda za ruch do przodu
 
+        # Nagroda za poprawny kąt względem rampy
         if angle_diff <= np.pi / 12:
-            reward += 10.0
+            reward += 10.0  # Idealny kąt
         elif angle_diff <= np.pi / 6:
-            reward += 5.0
+            reward += 5.0  # Akceptowalny kąt
         else:
-            reward -= angle_diff * 2.0
+            reward -= angle_diff * 2.0  # Kara za zły kąt
 
-        current_speed = self.car_body.linearVelocity[0]
+        # Prędkość pojazdu
         target_speed = 5.0
         speed_diff = abs(current_speed - target_speed)
-        if 6.0 <= current_speed:
-            reward += 15.0
+        if current_speed >= 6.0:
+            reward += 15.0  # Nagroda za osiągnięcie odpowiedniej prędkości
         else:
             reward += max(0, 10.0 - speed_diff)
 
-        if self.current_step % 50 == 0:
-            reward += 10.0
+        # Nagroda za pokonanie rampy (znaczny ruch i niski kąt różnicy)
+        if delta_x > 1.0 and angle_diff <= np.pi / 12:
+            reward += 50.0
 
-        if not touching_ground:
-            reward -= 2.0
-
+        # Kara za wypadnięcie z mapy
         if self.car_body.position[1] < 0:
             reward -= 100.0
 
-        if np.pi / 2 - 0.1 <= abs(current_angle) <= np.pi / 2 + 0.1 and abs(angle_diff) <= np.pi / 12:
-            reward += 50.0
-
         self.current_reward += reward
 
-        done = self._is_done()
+        terminated = self._check_game_over()
+        driver_on_ground = self._is_driver_touching_ground()
 
-        if self.current_step >= self.max_steps:
-            done = True
+        if driver_on_ground:
+            terminated = True
 
-        if done:
+        if terminated or self.current_step >= self.max_steps:
+            terminated = True
             self.episode_rewards.append(self.current_reward)
-
-        ground_slope = self._calculate_ground_slope()
-        angle_diff = self._calculate_angle_diff()
 
         info = {
             "ground_slope": ground_slope,
             "angle_diff": angle_diff
         }
 
-        terminated = self._is_done()
-        truncated = False
-        if self.current_step >= self.max_steps:
-            truncated = True
-
-        return obs, reward, terminated, truncated, info
+        return obs, reward, terminated, False, info
 
     def render(self):
         for event in pygame.event.get():
@@ -218,6 +225,22 @@ class HillClimbEnv(gym.Env):
         pygame.display.flip()
         self.clock.tick(60)
 
+    def _check_game_over(self):
+
+        if self.contact_listener.game_over:
+            print("Game Over! Driver hit the ground!")
+            return True
+
+        if self.car_body.position[1] < MAP_MIN_Y:
+            print("Game Over! You've fallen off the map!")
+            return True
+
+        if self.car_body.position[0] >= END_X:
+            print("Congratulations! You've completed the map!")
+            return True
+
+        return False
+
     def _calculate_ground_slope(self):
         terrain_points = self.ground_body.userData.get("points", [])
         if not terrain_points:
@@ -246,14 +269,6 @@ class HillClimbEnv(gym.Env):
         for contact_edge in self.wheel2.contacts:
             if contact_edge.contact.touching:
                 return True
-        return False
-
-    def _is_done(self):
-        if self.driver_body.position[1] < 0:
-            return True
-        if abs(self.car_body.angle) >= np.pi / 2:
-            self.current_reward -= 50.0
-            return True
         return False
 
     def _draw_text(self, text, x, y, color=(0, 0, 0)):
