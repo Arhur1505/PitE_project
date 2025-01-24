@@ -1,9 +1,32 @@
 import Box2D
-from Box2D.b2 import world, staticBody, dynamicBody, polygonShape, circleShape
+from Box2D.b2 import world, staticBody, dynamicBody, polygonShape, circleShape, contactListener
 from noise import pnoise1
 import numpy as np
 import random
 from modules.settings import END_X
+
+class GameContactListener(Box2D.b2.contactListener):
+    def __init__(self):
+        super().__init__()
+        self.contacts = {}  # Dictionary to track contact states
+        self.game_over = False  # Track if the game is over
+
+    def BeginContact(self, contact):
+        self.contacts[contact.fixtureA] = True
+        self.contacts[contact.fixtureB] = True
+        # Check if the driver has hit the ground
+        body_a = contact.fixtureA.body
+        body_b = contact.fixtureB.body
+        if (getattr(body_a, 'userData', None) == "driver" and body_b.type == 0) or \
+           (getattr(body_b, 'userData', None) == "driver" and body_a.type == 0):
+            self.game_over = True
+
+    def EndContact(self, contact):
+        self.contacts[contact.fixtureA] = False
+        self.contacts[contact.fixtureB] = False
+
+    def is_touching(self, fixture):
+        return self.contacts.get(fixture, False)
 
 class CustomContactListener(Box2D.b2.contactListener):
     def __init__(self):
