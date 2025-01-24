@@ -3,6 +3,7 @@ from Box2D.b2 import world, staticBody, dynamicBody, polygonShape, circleShape
 from noise import pnoise1
 import numpy as np
 import random
+from modules.settings import END_X
 
 class CustomContactListener(Box2D.b2.contactListener):
     def __init__(self):
@@ -24,7 +25,6 @@ def create_world():
     physics_world = world(gravity=(0, -10), doSleep=True)
 
     start_x = 0
-    end_x = 500
     base_height = 6
     amplitude = 5.5
     frequency = 0.04
@@ -33,7 +33,7 @@ def create_world():
     noise_offset = random_seed * 0.01
 
     step = 0.2
-    x_values = np.arange(start_x, end_x + step, step)
+    x_values = np.arange(start_x, END_X + step, step)
 
     dense_points = []
     first_noise_val = pnoise1(10 * frequency + noise_offset)

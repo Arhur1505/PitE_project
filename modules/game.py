@@ -1,7 +1,7 @@
 import pygame
 from modules.settings import (
     screen, WIDTH, HEIGHT, WHITE, GROUND_COLOR, CAR_COLOR,
-    WHEEL_COLOR, DRIVER_COLOR, BLACK, MAP_MIN_Y
+    WHEEL_COLOR, DRIVER_COLOR, BLACK, MAP_MIN_Y, END_X
 )
 from Box2D.b2 import polygonShape, circleShape
 
@@ -37,7 +37,6 @@ def draw_body(body, color, offset_x):
                 py = HEIGHT - position[1] * SCALE
                 pygame.draw.circle(screen, color, (int(px), int(py)), int(shape.radius * SCALE))
 
-
 def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints, contact_listener, additional_bodies=[]):
     clock = pygame.time.Clock()
     offset_x = 0
@@ -69,9 +68,12 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
             print("Game Over! You fell!")
             running = False
 
-        # Sprawdzenie warunku upadku poza mapę
         if car_body.position[1] < MAP_MIN_Y:
             print("Game Over! You've fallen off the map!")
+            running = False
+
+        if car_body.position[0] >= END_X:
+            print("Congratulations! You've completed the map!")
             running = False
 
         draw_body(ground_body, GROUND_COLOR, offset_x)

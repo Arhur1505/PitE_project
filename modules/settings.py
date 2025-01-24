@@ -3,6 +3,7 @@ import pygame
 pygame.init()
 WIDTH, HEIGHT = 800, 400
 MAP_MIN_Y = -10
+END_X = 500
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 FPS = 60
