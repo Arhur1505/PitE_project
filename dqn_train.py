@@ -1,7 +1,7 @@
 from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
-from modules.ppo_env import HillClimbEnv
+from modules.dqn_env import HillClimbEnv
 
 env = Monitor(HillClimbEnv(max_steps=1000, debug=False))
 vec_env = DummyVecEnv([lambda: env])
@@ -23,7 +23,7 @@ model = DQN(
 )
 
 model.learn(total_timesteps=100000, log_interval=10)
-model.save(".models/dqn_hill_climb")
+model.save("models/dqn_hill_climb")
 
 obs, _ = env.reset()
 for _ in range(1000):
