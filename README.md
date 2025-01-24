@@ -61,7 +61,7 @@ python main.py
 To train the AI agent using PPO:
 
 ```bash
-python quick_train.py
+python ppo_train.py
 ```
 
 This will save the best model in the `models/` directory.
