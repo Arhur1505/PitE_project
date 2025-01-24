@@ -6,6 +6,8 @@ from modules.hill_climb_env import HillClimbEnv
 env = Monitor(HillClimbEnv(max_steps=1000, debug=False))
 vec_env = DummyVecEnv([lambda: env])
 
+tensorboard_dir = "./tensorboard/"
+
 model = DQN(
     "MlpPolicy",
     vec_env,
@@ -17,7 +19,7 @@ model = DQN(
     train_freq=4,
     gamma=0.99,
     verbose=1,
-    tensorboard_log="./dqn_hill_climb/",
+    tensorboard_log=tensorboard_dir,
 )
 
 model.learn(total_timesteps=100000, log_interval=10)

@@ -16,7 +16,6 @@ if __name__ == "__main__":
         os.makedirs(tensorboard_dir, exist_ok=True)
 
         train_env = DummyVecEnv([lambda: Monitor(HillClimbEnv(max_steps=1000, debug=False))])
-
         eval_env = DummyVecEnv([lambda: Monitor(HillClimbEnv(max_steps=1000, debug=False))])
 
         eval_callback = EvalCallback(
@@ -52,7 +51,7 @@ if __name__ == "__main__":
         end_time = time.time()
         training_time = end_time - start_time
 
-        model.save("./models/ppo_hill_climb")
+        model.save("/models/ppo_hill_climb")
         print("Training completed. Model saved.")
         print(f"Training time: {training_time:.2f} seconds.")
 

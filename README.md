@@ -71,7 +71,7 @@ This will save the best model in the `models/` directory.
 To test the trained model:
 
 ```bash
-python test.py
+python ppo_test.py
 ```
 
 ### Viewing TensorBoard Logs
