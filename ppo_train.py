@@ -4,7 +4,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
-from modules.hill_climb_env import HillClimbEnv
+from modules.ppo_env import HillClimbEnv
 
 if __name__ == "__main__":
     try:

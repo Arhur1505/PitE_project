@@ -1,5 +1,5 @@
 from stable_baselines3 import PPO
-from modules.hill_climb_env import HillClimbEnv
+from modules.ppo_env import HillClimbEnv
 
 env = HillClimbEnv(max_steps=10000, debug=False)
 

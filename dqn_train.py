@@ -1,7 +1,7 @@
 from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
-from modules.hill_climb_env import HillClimbEnv
+from modules.ppo_env import HillClimbEnv
 
 env = Monitor(HillClimbEnv(max_steps=1000, debug=False))
 vec_env = DummyVecEnv([lambda: env])
