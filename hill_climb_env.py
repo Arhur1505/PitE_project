@@ -2,10 +2,10 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import pygame
-from car import create_car
-from physics import create_world
-from game import draw_body
-from settings import WIDTH, HEIGHT, WHITE, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, GROUND_COLOR
+from modules.car import create_car
+from modules.physics import create_world
+from modules.game import draw_body
+from modules.settings import WIDTH, HEIGHT, WHITE, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, GROUND_COLOR
 
 
 class HillClimbEnv(gym.Env):

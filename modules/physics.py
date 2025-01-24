@@ -2,6 +2,7 @@ import Box2D
 from Box2D.b2 import world, staticBody, dynamicBody, polygonShape, circleShape
 from noise import pnoise1
 import numpy as np
+import random
 
 class CustomContactListener(Box2D.b2.contactListener):
     def __init__(self):
@@ -22,31 +23,51 @@ class CustomContactListener(Box2D.b2.contactListener):
 def create_world():
     physics_world = world(gravity=(0, -10), doSleep=True)
 
-    contact_listener = CustomContactListener()
-    physics_world.contactListener = contact_listener
-
     start_x = 0
-    end_x = 1000
-    base_height = 4
-    amplitude = 6
-    frequency = 0.07
+    end_x = 500
+    base_height = 6
+    amplitude = 5.5
+    frequency = 0.04
+
+    random_seed = random.randint(0, 1000000)
+    noise_offset = random_seed * 0.01
 
     step = 0.2
     x_values = np.arange(start_x, end_x + step, step)
-    dense_points = []
-    ramp_array = []
 
-    for value in x_values:
-        if value > 45 and value < 70:
-            height = dense_points[-1][1] + 0.1
-            ramp_array.append((value, height))
-            
-        elif value > 75 and value < 100:
-            height = ramp_array[-1][1]
-            ramp_array.remove(ramp_array[-1])
+    dense_points = []
+    for x in x_values:
+        noise_val = pnoise1(x * frequency + noise_offset)
+        y = base_height + noise_val * amplitude
+        dense_points.append((float(x), float(y)))
+
+    min_amplitude = float('inf')
+    ramp_start_index = 0
+    ramp_length = int(15 / step)
+
+    for i in range(int(25 / step), len(dense_points) - ramp_length):
+        segment = dense_points[i:i + ramp_length]
+        y_values = [point[1] for point in segment]
+        amplitude_segment = max(y_values) - min(y_values)
+        if amplitude_segment < min_amplitude:
+            min_amplitude = amplitude_segment
+            ramp_start_index = i
+
+    ramp_points = []
+    ramp_peak_index = ramp_length // 2
+    ramp_height = 5
+    gap_width = 15
+
+    for j, (x, y) in enumerate(dense_points[ramp_start_index:ramp_start_index + ramp_length]):
+        if j < ramp_peak_index:
+            new_y = y + (j / ramp_peak_index) * ramp_height
+        elif j >= ramp_peak_index + gap_width:
+            new_y = y + ((ramp_length - j) / (ramp_length - ramp_peak_index - gap_width)) * ramp_height
         else:
-            height = base_height + pnoise1(value * frequency + 0.25) * amplitude
-        dense_points.append((float(value), float(height)))
+            new_y = base_height - 1
+
+        ramp_points.append((x, new_y))
+        dense_points[ramp_start_index + j] = (x, new_y)
 
     ground_body = physics_world.CreateStaticBody()
 
@@ -72,23 +93,17 @@ def create_world():
             friction=0.6,
             restitution=0.2
         )
+
         i += max_vertices
 
     ground_body.userData = {"points": dense_points}
 
-    box_position = (50, base_height + 5)
-    box_body = physics_world.CreateDynamicBody(
-        position=box_position,
-        fixtures=Box2D.b2FixtureDef(
-            shape=polygonShape(box=(1, 1)),
-            density=0.1,
-            friction=0.2,
-            restitution=0.1
-        )
+    ball_position_index = max(0, ramp_start_index - 5)
+    ball_position = (
+        dense_points[ball_position_index][0],
+        dense_points[ball_position_index][1] + 5
     )
-    box_body.userData = {"type": "pushable_object"}
 
-    ball_position = (60, base_height + 30)
     ball_body = physics_world.CreateDynamicBody(
         position=ball_position,
         fixtures=Box2D.b2FixtureDef(
@@ -100,4 +115,4 @@ def create_world():
     )
     ball_body.userData = {"type": "falling_ball"}
 
-    return physics_world, ground_body, box_body, ball_body
+    return physics_world, ground_body, ball_body

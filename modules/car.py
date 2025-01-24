@@ -12,8 +12,8 @@ def create_car(world):
         wheel.CreateFixture(
             shape=circleShape(radius=0.5),
             density=1,
-            friction=0.9,
-            restitution=0.5
+            friction=0.6,
+            restitution=0.3
         )
 
     joint1 = world.CreateRevoluteJoint(

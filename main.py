@@ -1,15 +1,9 @@
-from physics import create_world
-from car import create_car
-from game import game_loop
+from modules.physics import create_world
+from modules.car import create_car
+from modules.game import game_loop
 from Box2D.b2 import contactListener
 
-
 class GameContactListener(contactListener):
-    """
-    Custom contact listener to detect collisions between the driver and ground.
-    If a collision is detected, the game ends.
-    """
-
     def __init__(self):
         contactListener.__init__(self)
         self.game_over = False
@@ -24,23 +18,19 @@ class GameContactListener(contactListener):
 
 def main():
     try:
-        # Create the physics world and objects
-        world, ground_body, box_body, ball_body = create_world()  # Upewnij się, że funkcja zwraca wszystkie obiekty
+        world, ground_body, ball_body = create_world()
         car_body, wheel1, wheel2, driver_body, joint1, joint2 = create_car(world)
 
-        # Initialize the contact listener
         contact_listener = GameContactListener()
         world.contactListener = contact_listener
 
-        # Start the game loop, including additional objects
         game_loop(
             world, car_body, wheel1, wheel2, driver_body, ground_body,
-            [joint1, joint2], contact_listener, additional_bodies=[box_body, ball_body]
+            [joint1, joint2], contact_listener, additional_bodies=[ball_body]
         )
 
     except Exception as e:
         print(f"An error occurred: {e}")
-
 
 if __name__ == "__main__":
     main()

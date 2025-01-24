@@ -1,11 +1,14 @@
 import pygame
-from settings import screen, WIDTH, HEIGHT, WHITE, GROUND_COLOR, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, BLACK
+from modules.settings import (
+    screen, WIDTH, HEIGHT, WHITE, GROUND_COLOR, CAR_COLOR,
+    WHEEL_COLOR, DRIVER_COLOR, BLACK, MAP_MIN_Y
+)
+from Box2D.b2 import polygonShape, circleShape
 
+SCALE = 20
 
 def draw_body(body, color, offset_x):
-    from Box2D.b2 import polygonShape, circleShape, chainShape
 
-    SCALE = 20
     if body.userData and "points" in body.userData:
         terrain_points = body.userData["points"]
         polygon_points = []
@@ -39,6 +42,7 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
     clock = pygame.time.Clock()
     offset_x = 0
     running = True
+
     while running:
         screen.fill(WHITE)
 
@@ -62,7 +66,12 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
         world.Step(1 / 60, 6, 2)
 
         if contact_listener.game_over:
-            print("Game Over!")
+            print("Game Over! You fell!")
+            running = False
+
+        # Sprawdzenie warunku upadku poza mapę
+        if car_body.position[1] < MAP_MIN_Y:
+            print("Game Over! You've fallen off the map!")
             running = False
 
         draw_body(ground_body, GROUND_COLOR, offset_x)
