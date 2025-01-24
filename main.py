@@ -1,4 +1,3 @@
-from modules.physics import create_world
 from modules.car import create_car
 from modules.game import game_loop
 from modules.physics import create_world, GameContactListener

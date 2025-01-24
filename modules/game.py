@@ -37,6 +37,21 @@ def draw_body(body, color, offset_x):
                 py = HEIGHT - position[1] * SCALE
                 pygame.draw.circle(screen, color, (int(px), int(py)), int(shape.radius * SCALE))
 
+def check_game_over(car_body, contact_listener):
+    if contact_listener.game_over:
+        print("Game Over! You fell!")
+        return True
+
+    if car_body.position[1] < MAP_MIN_Y:
+        print("Game Over! You've fallen off the map!")
+        return True
+
+    if car_body.position[0] >= END_X:
+        print("Congratulations! You've completed the map!")
+        return True
+
+    return False
+
 def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints, contact_listener, additional_bodies=[]):
     clock = pygame.time.Clock()
     offset_x = 0
@@ -64,16 +79,7 @@ def game_loop(world, car_body, wheel1, wheel2, driver_body, ground_body, joints,
 
         world.Step(1 / 60, 6, 2)
 
-        if contact_listener.game_over:
-            print("Game Over! You fell!")
-            running = False
-
-        if car_body.position[1] < MAP_MIN_Y:
-            print("Game Over! You've fallen off the map!")
-            running = False
-
-        if car_body.position[0] >= END_X:
-            print("Congratulations! You've completed the map!")
+        if check_game_over(car_body, contact_listener):
             running = False
 
         draw_body(ground_body, GROUND_COLOR, offset_x)
