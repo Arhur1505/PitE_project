@@ -16,7 +16,14 @@ class HillClimbEnv(gym.Env):
         self.debug = debug
 
         self.last_x = 0
-        self.world, self.ground_body, _ = create_world()
+
+        self.world, ball_body = create_world()
+        self.ground_body = next(
+            (body for body in self.world.bodies if body.userData and "points" in body.userData),
+            None
+        )
+        if self.ground_body is None:
+            raise ValueError("Ground body not found in the world!")
         (
             self.car_body,
             self.wheel1,
@@ -65,7 +72,16 @@ class HillClimbEnv(gym.Env):
 
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
-        self.world, self.ground_body, _ = create_world()
+
+        self.world, ball_body = create_world()
+        # Znajdź ground_body na podstawie userData
+        self.ground_body = next(
+            (body for body in self.world.bodies if body.userData and "points" in body.userData),
+            None
+        )
+        if self.ground_body is None:
+            raise ValueError("Ground body not found in the world!")
+
         (
             self.car_body,
             self.wheel1,
@@ -197,6 +213,7 @@ class HillClimbEnv(gym.Env):
 
         return obs, reward, terminated, False, info
 
+
     def render(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -235,6 +252,7 @@ class HillClimbEnv(gym.Env):
             print("Game Over! You've fallen off the map!")
             return True
 
+        # Sprawdzenie, czy ukończono mapę
         if self.car_body.position[0] >= END_X:
             print("Congratulations! You've completed the map!")
             return True

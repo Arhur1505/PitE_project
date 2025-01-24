@@ -34,12 +34,11 @@ def create_world():
     base_height = 6
     amplitude = 5.5
     frequency = 0.04
+    step = 0.2
+    x_values = np.arange(start_x, END_X + step, step)
 
     random_seed = random.randint(0, 1000000)
     noise_offset = random_seed * 0.01
-
-    step = 0.2
-    x_values = np.arange(start_x, END_X + step, step)
 
     dense_points = []
     first_noise_val = pnoise1(10 * frequency + noise_offset)
@@ -65,7 +64,6 @@ def create_world():
             min_amplitude = amplitude_segment
             ramp_start_index = i
 
-    ramp_points = []
     ramp_peak_index = ramp_length // 2
     ramp_height = 5
     gap_width = 15
@@ -77,12 +75,9 @@ def create_world():
             new_y = y + ((ramp_length - j) / (ramp_length - ramp_peak_index - gap_width)) * ramp_height
         else:
             new_y = base_height - 1
-
-        ramp_points.append((x, new_y))
         dense_points[ramp_start_index + j] = (x, new_y)
 
     ground_body = physics_world.CreateStaticBody()
-
     max_vertices = 14
     i = 0
     n = len(dense_points)
@@ -127,4 +122,4 @@ def create_world():
     )
     ball_body.userData = {"type": "falling_ball"}
 
-    return physics_world, ground_body, ball_body
+    return physics_world, ball_body

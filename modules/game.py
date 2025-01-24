@@ -8,28 +8,23 @@ from Box2D.b2 import polygonShape, circleShape
 SCALE = 20
 
 def draw_body(body, color, offset_x):
-
     if body.userData and "points" in body.userData:
-        terrain_points = body.userData["points"]
-        polygon_points = []
-        for (x, y) in terrain_points:
-            px = x * SCALE - offset_x
-            py = HEIGHT - y * SCALE
-            polygon_points.append((px, py))
-        polygon_points.append((terrain_points[-1][0] * SCALE - offset_x, HEIGHT))
-        polygon_points.append((terrain_points[0][0] * SCALE - offset_x, HEIGHT))
-
-        pygame.draw.polygon(screen, GROUND_COLOR, polygon_points)
+        terrain_points = body.userData.get("points", [])
+        if terrain_points:
+            polygon_points = [
+                (x * SCALE - offset_x, HEIGHT - y * SCALE) for (x, y) in terrain_points
+            ]
+            polygon_points.append((terrain_points[-1][0] * SCALE - offset_x, HEIGHT))
+            polygon_points.append((terrain_points[0][0] * SCALE - offset_x, HEIGHT))
+            pygame.draw.polygon(screen, GROUND_COLOR, polygon_points)
     else:
         for fixture in body.fixtures:
             shape = fixture.shape
             if isinstance(shape, polygonShape):
                 vertices = [(body.transform * v) for v in shape.vertices]
-                transformed = []
-                for v in vertices:
-                    px = v[0] * SCALE - offset_x
-                    py = HEIGHT - v[1] * SCALE
-                    transformed.append((px, py))
+                transformed = [
+                    (v[0] * SCALE - offset_x, HEIGHT - v[1] * SCALE) for v in vertices
+                ]
                 pygame.draw.polygon(screen, color, transformed)
             elif isinstance(shape, circleShape):
                 position = body.transform * shape.pos
