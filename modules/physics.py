@@ -65,7 +65,7 @@ def create_world():
             ramp_start_index = i
 
     ramp_peak_index = ramp_length // 2
-    ramp_height = 5
+    ramp_height = 3
     gap_width = 15
 
     for j, (x, y) in enumerate(dense_points[ramp_start_index:ramp_start_index + ramp_length]):

@@ -113,86 +113,71 @@ class HillClimbEnv(gym.Env):
         else:
             self.gas_cooldown += 1
 
-        # Nachylenie rampy i różnica kąta względem rampy
         ground_slope = self._calculate_ground_slope()
         current_angle = self.car_body.angle
         angle_diff = abs(current_angle - ground_slope)
 
-        # Dynamiczne sterowanie
         if angle_diff > np.pi / 6:
             if current_angle > ground_slope:
-                action = 2  # Przyspieszenie do przodu
+                action = 2
             elif current_angle < ground_slope:
-                action = 1  # Przyspieszenie do tyłu
+                action = 1
 
-        # Ogranicz prędkość i dodaj karę za nadmierną prędkość
-        current_speed = abs(self.car_body.linearVelocity[0])
-        if current_speed > 12.0:
-            if action in [1, 2]:
-                self.current_reward -= 5.0
-                action = 0  # Zatrzymanie
-
-        # Wykonanie akcji
         if action == 0:
             self.joint1.motorSpeed = 0.0
             self.joint2.motorSpeed = 0.0
-            self.gas_streak = 0
         elif action == 1 and touching_ground and self.gas_cooldown <= 5:
             self.joint1.motorSpeed = -30.0
             self.joint2.motorSpeed = -30.0
-            self.gas_streak += 1
         elif action == 2 and touching_ground and self.gas_cooldown <= 5:
             self.joint1.motorSpeed = 30.0
             self.joint2.motorSpeed = 30.0
-            self.gas_streak += 1
         else:
             self.joint1.motorSpeed = 0.0
             self.joint2.motorSpeed = 0.0
-            self.gas_streak = 0
-
-        if self.gas_streak > 50:
-            self.current_reward -= 10.0  # Kara za zbyt długie przytrzymanie gazu
 
         self.world.Step(1 / 60, 6, 2)
 
-        # Obliczanie nagrody
         obs = self._get_observation()
         reward = 0.0
 
-        # Ruch w osi X
         current_x = self.car_body.position[0]
         delta_x = current_x - self.last_x
         self.last_x = current_x
 
         if delta_x <= 0.1:
-            reward -= 10.0  # Kara za stagnację
+            reward -= 10.0
 
         if delta_x > 0:
-            reward += delta_x * 10.0  # Nagroda za ruch do przodu
+            reward += delta_x * 10.0
 
-        # Nagroda za poprawny kąt względem rampy
         if angle_diff <= np.pi / 12:
-            reward += 10.0  # Idealny kąt
+            reward += 10.0
         elif angle_diff <= np.pi / 6:
-            reward += 5.0  # Akceptowalny kąt
+            reward += 5.0
         else:
-            reward -= angle_diff * 2.0  # Kara za zły kąt
+            reward -= angle_diff * 2.0
 
-        # Prędkość pojazdu
         target_speed = 5.0
-        speed_diff = abs(current_speed - target_speed)
-        if current_speed >= 6.0:
-            reward += 15.0  # Nagroda za osiągnięcie odpowiedniej prędkości
-        else:
-            reward += max(0, 10.0 - speed_diff)
+        speed_diff = abs(abs(self.car_body.linearVelocity[0]) - target_speed)
+        reward += max(0, 10.0 - speed_diff)
 
-        # Nagroda za pokonanie rampy (znaczny ruch i niski kąt różnicy)
         if delta_x > 1.0 and angle_diff <= np.pi / 12:
             reward += 50.0
 
-        # Kara za wypadnięcie z mapy
-        if self.car_body.position[1] < 0:
+        if self.car_body.position[1] < MAP_MIN_Y:
             reward -= 100.0
+
+        if self.car_body.position[0] >= END_X:
+            reward += 200.0
+
+        if action in [1, 2]:
+            self.gas_streak += 1
+        else:
+            self.gas_streak = 0
+
+        if self.gas_streak > 50:
+            reward -= 5.0
 
         self.current_reward += reward
 
@@ -200,6 +185,7 @@ class HillClimbEnv(gym.Env):
         driver_on_ground = self._is_driver_touching_ground()
 
         if driver_on_ground:
+            reward -= 150.0
             terminated = True
 
         if terminated or self.current_step >= self.max_steps:
@@ -212,7 +198,6 @@ class HillClimbEnv(gym.Env):
         }
 
         return obs, reward, terminated, False, info
-
 
     def render(self):
         for event in pygame.event.get():
@@ -252,7 +237,6 @@ class HillClimbEnv(gym.Env):
             print("Game Over! You've fallen off the map!")
             return True
 
-        # Sprawdzenie, czy ukończono mapę
         if self.car_body.position[0] >= END_X:
             print("Congratulations! You've completed the map!")
             return True

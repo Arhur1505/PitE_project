@@ -16,6 +16,5 @@ while not (terminated or truncated):
     env.render()
     total_reward += reward
 
-
 env.close()
 print(f"Test completed. Total reward: {total_reward:.2f}")

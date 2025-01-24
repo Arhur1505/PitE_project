@@ -32,7 +32,7 @@ if __name__ == "__main__":
             train_env,
             verbose=1,
             device="cpu",
-            n_steps=4096,
+            n_steps=2048,
             batch_size=512,
             learning_rate=0.0001,
             ent_coef=0.01,
@@ -44,14 +44,14 @@ if __name__ == "__main__":
         start_time = time.time()
 
         model.learn(
-            total_timesteps=50000,
+            total_timesteps=100000,
             callback=eval_callback
         )
 
         end_time = time.time()
         training_time = end_time - start_time
 
-        model.save("/models/ppo_hill_climb")
+        model.save("models/ppo_hill_climb")
         print("Training completed. Model saved.")
         print(f"Training time: {training_time:.2f} seconds.")
 
