@@ -36,9 +36,15 @@ def create_world():
     x_values = np.arange(start_x, end_x + step, step)
 
     dense_points = []
+    first_noise_val = pnoise1(10 * frequency + noise_offset)
+    flat_height = base_height + first_noise_val * amplitude
+
     for x in x_values:
-        noise_val = pnoise1(x * frequency + noise_offset)
-        y = base_height + noise_val * amplitude
+        if x < 10:
+            y = flat_height
+        else:
+            noise_val = pnoise1(x * frequency + noise_offset)
+            y = base_height + noise_val * amplitude
         dense_points.append((float(x), float(y)))
 
     min_amplitude = float('inf')
