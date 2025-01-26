@@ -5,7 +5,7 @@ import pygame
 
 from modules.car import create_car
 from modules.physics import create_world, GameContactListener
-from modules.game import draw_body
+from modules.game import draw_body, check_game_over
 from modules.settings import WIDTH, HEIGHT, WHITE, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, GROUND_COLOR, MAP_MIN_Y, END_X
 
 class HillClimbEnv(gym.Env):
@@ -24,7 +24,6 @@ class HillClimbEnv(gym.Env):
         )
         if self.ground_body is None:
             raise ValueError("Ground body not found in the world!")
-
         (
             self.car_body,
             self.wheel1,
@@ -37,11 +36,10 @@ class HillClimbEnv(gym.Env):
         self.contact_listener = GameContactListener()
         self.world.contactListener = self.contact_listener
 
-        # Ograniczona przestrzeń akcji i obserwacji
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(
-            low=np.array([-500, -500, -50, -50, -np.pi, -np.pi]),
-            high=np.array([500, 500, 50, 50, np.pi, np.pi]),
+            low=np.array([-np.inf] * 6),
+            high=np.array([np.inf] * 6),
             dtype=np.float32
         )
 
@@ -70,12 +68,13 @@ class HillClimbEnv(gym.Env):
                         (body_b == self.driver_body and body_a.type == 0):
                     return True
 
-        return False
+            return False
 
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
 
         self.world, ball_body = create_world()
+        # Znajdź ground_body na podstawie userData
         self.ground_body = next(
             (body for body in self.world.bodies if body.userData and "points" in body.userData),
             None
@@ -102,7 +101,7 @@ class HillClimbEnv(gym.Env):
         self.contact_listener.game_over = False
 
         observation = self._get_observation()
-        return np.clip(observation, self.observation_space.low, self.observation_space.high), {}
+        return observation, {}
 
     def step(self, action):
         self.current_step += 1
@@ -149,28 +148,25 @@ class HillClimbEnv(gym.Env):
         if delta_x <= 0.1:
             reward -= 10.0
 
-        if delta_x > 0.1:
-            reward += delta_x * 20.0
+        if delta_x > 0:
+            reward += delta_x * 10.0
 
-        if angle_diff <= np.pi / 12:
+        if angle_diff <= np.pi / 6:
             reward += 10.0
-        elif angle_diff <= np.pi / 6:
+        elif angle_diff <= np.pi / 4:
             reward += 5.0
         else:
             reward -= angle_diff * 2.0
 
-        target_speed = 5.0
+        target_speed = 8.0
         speed_diff = abs(abs(self.car_body.linearVelocity[0]) - target_speed)
         reward += max(0, 10.0 - speed_diff)
 
-        if delta_x > 1.0 and angle_diff <= np.pi / 12:
-            reward += 50.0
-
         if self.car_body.position[1] < MAP_MIN_Y:
-            reward -= 100.0
+            reward -= 1000.0
 
         if self.car_body.position[0] >= END_X:
-            reward += 2000.0
+            reward += 300.0
 
         if action in [1, 2]:
             self.gas_streak += 1
@@ -186,7 +182,7 @@ class HillClimbEnv(gym.Env):
         driver_on_ground = self._is_driver_touching_ground()
 
         if driver_on_ground:
-            reward -= 500.0
+            reward -= 100.0
             terminated = True
 
         if terminated or self.current_step >= self.max_steps:
@@ -229,6 +225,7 @@ class HillClimbEnv(gym.Env):
         self.clock.tick(60)
 
     def _check_game_over(self):
+
         if self.contact_listener.game_over:
             print("Game Over! Driver hit the ground!")
             return True
