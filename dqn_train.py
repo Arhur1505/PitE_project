@@ -22,7 +22,7 @@ model = DQN(
     tensorboard_log=tensorboard_dir,
 )
 
-model.learn(total_timesteps=100000, log_interval=10)
+model.learn(total_timesteps=500000, log_interval=10)
 model.save("models/dqn_hill_climb")
 
 obs, _ = env.reset()
