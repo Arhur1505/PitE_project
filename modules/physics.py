@@ -33,7 +33,7 @@ def create_world():
     start_x = 0
     base_height = 6
     amplitude = 5.5
-    frequency = 0.04
+    frequency = 0.06
     step = 0.2
     x_values = np.arange(start_x, END_X + step, step)
 
