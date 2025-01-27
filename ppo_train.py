@@ -24,7 +24,7 @@ if __name__ == "__main__":
             eval_env,
             best_model_save_path=best_model_dir,
             log_path=log_dir,
-            eval_freq=5000,
+            eval_freq=10000,
             deterministic=True,
             render=False,
         )
@@ -46,19 +46,19 @@ if __name__ == "__main__":
         start_time = time.time()
 
         model.learn(
-            total_timesteps=100000,
+            total_timesteps=500000,
             callback=eval_callback
         )
 
         end_time = time.time()
         training_time = end_time - start_time
 
-        model.save("models/ppo_hill_climb")
+        model.save("models/ppo_model")
         print("Training completed. Model saved.")
         print(f"Training time: {training_time:.2f} seconds.")
 
         best_model_path = os.path.join(best_model_dir, "best_model.zip")
-        custom_model_path = os.path.join(best_model_dir, "dqn_best_hill_climb_model.zip")
+        custom_model_path = os.path.join(best_model_dir, "ppo_best_model.zip")
 
         if os.path.exists(best_model_path):
             shutil.move(best_model_path, custom_model_path)

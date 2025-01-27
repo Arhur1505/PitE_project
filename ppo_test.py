@@ -3,7 +3,8 @@ from modules.ppo_env import HillClimbEnv
 
 env = HillClimbEnv(max_steps=10000, debug=False)
 
-model = PPO.load("models/best_model.zip")
+model = PPO.load("models/ppo_best_model.zip")
+#model = PPO.load("models/ppo_model.zip")
 
 obs, info = env.reset()
 terminated = False

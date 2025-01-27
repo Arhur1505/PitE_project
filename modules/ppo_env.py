@@ -151,9 +151,9 @@ class HillClimbEnv(gym.Env):
         if delta_x > 0:
             reward += delta_x * 10.0
 
-        if angle_diff <= np.pi / 12:
+        if angle_diff <= np.pi / 6:
             reward += 10.0
-        elif angle_diff <= np.pi / 6:
+        elif angle_diff <= np.pi / 4:
             reward += 5.0
         else:
             reward -= angle_diff * 2.0
@@ -162,14 +162,11 @@ class HillClimbEnv(gym.Env):
         speed_diff = abs(abs(self.car_body.linearVelocity[0]) - target_speed)
         reward += max(0, 10.0 - speed_diff)
 
-        if delta_x > 1.0 and angle_diff <= np.pi / 12:
-            reward += 50.0
-
         if self.car_body.position[1] < MAP_MIN_Y:
-            reward -= 100.0
+            reward -= 1000.0
 
         if self.car_body.position[0] >= END_X:
-            reward += 200.0
+            reward += 2000.0
 
         if action in [1, 2]:
             self.gas_streak += 1
@@ -280,9 +277,9 @@ class HillClimbEnv(gym.Env):
     def _get_observation(self):
         car_pos = self.car_body.position
         car_vel = self.car_body.linearVelocity
-        wheel_angle1 = self.joint1.angle
-        wheel_angle2 = self.joint2.angle
+        angle_diff = self._calculate_angle_diff()
+        ground_slope = self._calculate_ground_slope()
         return np.array(
-            [car_pos[0], car_pos[1], car_vel[0], car_vel[1], wheel_angle1, wheel_angle2],
+            [car_pos[0], car_pos[1], car_vel[0], car_vel[1], angle_diff, ground_slope],
             dtype=np.float32
         )
