@@ -38,8 +38,8 @@ class HillClimbEnv(gym.Env):
 
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(
-            low=np.array([-np.inf] * 6),
-            high=np.array([np.inf] * 6),
+            low=np.array([-np.inf] * 4),
+            high=np.array([np.inf] * 4),
             dtype=np.float32
         )
 
@@ -191,7 +191,12 @@ class HillClimbEnv(gym.Env):
 
         info = {
             "ground_slope": ground_slope,
-            "angle_diff": angle_diff
+            "angle_diff": angle_diff,
+            "delta_x_reward": delta_x * 10.0 if delta_x > 0 else -10.0,
+            "angle_reward": 10.0 if angle_diff <= np.pi / 6 else 5.0 if angle_diff <= np.pi / 4 else -angle_diff * 2.0,
+            "speed_reward": max(0, 10.0 - speed_diff),
+            "fall_penalty": -1000.0 if self.car_body.position[1] < MAP_MIN_Y else 0.0,
+            "finish_bonus": 300.0 if self.car_body.position[0] >= END_X else 0.0
         }
 
         return obs, reward, terminated, False, info
@@ -277,9 +282,5 @@ class HillClimbEnv(gym.Env):
     def _get_observation(self):
         car_pos = self.car_body.position
         car_vel = self.car_body.linearVelocity
-        wheel_angle1 = self.joint1.angle
-        wheel_angle2 = self.joint2.angle
         return np.array(
-            [car_pos[0], car_pos[1], car_vel[0], car_vel[1], wheel_angle1, wheel_angle2],
-            dtype=np.float32
-        )
+            [car_pos[0], car_pos[1], car_vel[0], car_vel[1]])

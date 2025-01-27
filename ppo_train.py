@@ -5,6 +5,8 @@ from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
 from modules.ppo_env import HillClimbEnv
+import os
+import shutil
 
 if __name__ == "__main__":
     try:
@@ -54,6 +56,15 @@ if __name__ == "__main__":
         model.save("models/ppo_hill_climb")
         print("Training completed. Model saved.")
         print(f"Training time: {training_time:.2f} seconds.")
+
+        best_model_path = os.path.join(best_model_dir, "best_model.zip")
+        custom_model_path = os.path.join(best_model_dir, "dqn_best_hill_climb_model.zip")
+
+        if os.path.exists(best_model_path):
+            shutil.move(best_model_path, custom_model_path)
+            print(f"Best model renamed to: {custom_model_path}")
+        else:
+            print("No best model found to rename.")
 
     except Exception as e:
         print("An error occurred during training:")
