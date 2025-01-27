@@ -113,28 +113,50 @@ class HillClimbEnv(gym.Env):
         else:
             self.gas_cooldown += 1
 
+        optimal_slope = self._calculate_ground_slope()
         ground_slope = self._calculate_ground_slope()
         current_angle = self.car_body.angle
-        angle_diff = abs(current_angle - ground_slope)
+        angle_diff = abs(current_angle - optimal_slope)
+
+        if np.pi / 2 - 0.1 <= abs(current_angle) <= np.pi / 2 + 0.1:
+            self.current_reward += 5.0
+            if current_angle > 0:
+                action = 2
+            else:
+                action = 1
 
         if angle_diff > np.pi / 6:
-            if current_angle > ground_slope:
+            if current_angle > optimal_slope:
                 action = 2
-            elif current_angle < ground_slope:
+            elif current_angle < optimal_slope:
                 action = 1
+
+
+        current_speed = abs(self.car_body.linearVelocity[0])
+        if current_speed > 12.0:
+            if action == 1 or action == 2:
+                self.current_reward -= 5.0
+                action = 0
 
         if action == 0:
             self.joint1.motorSpeed = 0.0
             self.joint2.motorSpeed = 0.0
+            self.gas_streak = 0
         elif action == 1 and touching_ground and self.gas_cooldown <= 5:
             self.joint1.motorSpeed = -30.0
             self.joint2.motorSpeed = -30.0
+            self.gas_streak += 1
         elif action == 2 and touching_ground and self.gas_cooldown <= 5:
             self.joint1.motorSpeed = 30.0
             self.joint2.motorSpeed = 30.0
+            self.gas_streak += 1
         else:
             self.joint1.motorSpeed = 0.0
             self.joint2.motorSpeed = 0.0
+            self.gas_streak = 0
+
+        if self.gas_streak > 50:
+            self.current_reward -= 10.0
 
         self.world.Step(1 / 60, 6, 2)
 
@@ -148,19 +170,26 @@ class HillClimbEnv(gym.Env):
         if delta_x <= 0.1:
             reward -= 10.0
 
-        if delta_x > 0:
+        if delta_x > 0.1:
             reward += delta_x * 10.0
 
-        if angle_diff <= np.pi / 6:
+        if angle_diff <= np.pi / 12:
             reward += 10.0
-        elif angle_diff <= np.pi / 4:
+        elif angle_diff <= np.pi / 6:
             reward += 5.0
         else:
             reward -= angle_diff * 2.0
 
+        current_speed = self.car_body.linearVelocity[0]
         target_speed = 5.0
-        speed_diff = abs(abs(self.car_body.linearVelocity[0]) - target_speed)
-        reward += max(0, 10.0 - speed_diff)
+        speed_diff = abs(current_speed - target_speed)
+        if 6.0 <= current_speed:
+            reward += 15.0
+        else:
+            reward += max(0, 10.0 - speed_diff)
+
+        if self.current_step % 50 == 0:
+            reward += 10.0
 
         if self.car_body.position[1] < MAP_MIN_Y:
             reward -= 1000.0
@@ -182,7 +211,7 @@ class HillClimbEnv(gym.Env):
         driver_on_ground = self._is_driver_touching_ground()
 
         if driver_on_ground:
-            reward -= 150.0
+            reward -= 1500.0
             terminated = True
 
         if terminated or self.current_step >= self.max_steps:

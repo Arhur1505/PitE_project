@@ -46,7 +46,7 @@ if __name__ == "__main__":
         start_time = time.time()
 
         model.learn(
-            total_timesteps=500000,
+            total_timesteps=50000,
             callback=eval_callback
         )
 
