@@ -74,7 +74,6 @@ class HillClimbEnv(gym.Env):
         super().reset(seed=seed)
 
         self.world, ball_body = create_world()
-        # Znajdź ground_body na podstawie userData
         self.ground_body = next(
             (body for body in self.world.bodies if body.userData and "points" in body.userData),
             None

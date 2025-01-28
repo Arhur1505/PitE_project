@@ -19,19 +19,23 @@ The primary goal is to explore the intersection of game development and machine 
 ├── logs/                   # Directory for logs and evaluation metrics
 │   ├── evaluations.npz     # Evaluation metrics for trained models
 ├── models/                 # Directory for saved models
-│   ├── best_model.zip      # Best-trained model during evaluation
-│   ├── ppo_hill_climb.zip  # Final PPO model after training
+│   ├── dqn_hill_climb.zip  # DQN model after training
+│   ├── ppo_best_model.zip  # Best-trained PPO model during evaluation
+│   ├── ppo_model.zip       # PPO model after training
 ├── modules/                # Core modules for game logic and environment
 │   ├── __init__.py         # Module initializer
 │   ├── car.py              # Handles car object creation
+│   ├── dqn_env.py          # Gym environment for DQN training
 │   ├── game.py             # Rendering logic for the game
-│   ├── hill_climb_env.py   # Custom Gym environment for Hill Climb Racing
 │   ├── physics.py          # Physics simulation and world creation
+│   ├── ppo_env.py          # Gym environment for PPO training
 │   └── settings.py         # Game settings and constants
 ├── tensorboard/            # Directory for TensorBoard logs
+├── dqn_test.py             # Script for testing the DQN agent
+├── dqn_train.py            # Script for training the DQN agent
 ├── main.py                 # Main script to run the game
-├── quick_train.py          # Script for training the RL agent
-├── test.py                 # Script for testing the trained agent
+├── ppo_test.py             # Script for testing the PPO agent
+├── ppo_train.py            # Script for training the PPO agent
 ├── requirements.txt        # Python dependencies
 └── README.md               # Project documentation
 ```
@@ -64,14 +68,26 @@ To train the AI agent using PPO:
 python ppo_train.py
 ```
 
+To train the AI agent using DQN:
+
+```bash
+python dqn_train.py
+```
+
 This will save the best model in the `models/` directory.
 
 ### Testing the AI Agent
 
-To test the trained model:
+To test the trained PPO model:
 
 ```bash
 python ppo_test.py
+```
+
+To test the trained DQN model:
+
+```bash
+python dqn_test.py
 ```
 
 ### Viewing TensorBoard Logs
@@ -88,7 +104,7 @@ tensorboard --logdir=tensorboard/
 
 - **Realistic Physics**: Simulates accurate vehicle dynamics.
 - **Custom Environment**: A Gym-compatible environment for Reinforcement Learning.
-- **Reinforcement Learning**: Train AI agents using PPO from Stable-Baselines3.
+- **Reinforcement Learning**: Train AI agents using PPO and DQN from Stable-Baselines3.
 - **Visualization**: Includes TensorBoard integration for training monitoring.
 - **Modular Design**: Easy-to-understand and extensible code structure.
 

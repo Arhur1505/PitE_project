@@ -9,7 +9,7 @@ from modules.game import draw_body, check_game_over
 from modules.settings import WIDTH, HEIGHT, WHITE, CAR_COLOR, WHEEL_COLOR, DRIVER_COLOR, GROUND_COLOR, MAP_MIN_Y, END_X
 
 class HillClimbEnv(gym.Env):
-    def __init__(self, max_steps=1000, debug=False):
+    def __init__(self, max_steps=500, debug=False):
         super(HillClimbEnv, self).__init__()
         self.max_steps = max_steps
         self.current_step = 0
@@ -38,8 +38,8 @@ class HillClimbEnv(gym.Env):
 
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(
-            low=np.array([-np.inf] * 4),
-            high=np.array([np.inf] * 4),
+            low=np.array([-np.inf] * 6),
+            high=np.array([np.inf] * 6),
             dtype=np.float32
         )
 
@@ -74,7 +74,6 @@ class HillClimbEnv(gym.Env):
         super().reset(seed=seed)
 
         self.world, ball_body = create_world()
-        # Znajdź ground_body na podstawie userData
         self.ground_body = next(
             (body for body in self.world.bodies if body.userData and "points" in body.userData),
             None
@@ -232,15 +231,16 @@ class HillClimbEnv(gym.Env):
     def _check_game_over(self):
 
         if self.contact_listener.game_over:
-            print("Game Over! Driver hit the ground!")
+            print(f"Game Over! Driver hit the ground! Car position: x={self.car_body.position[0]:.2f}, y={self.car_body.position[1]:.2f}")
             return True
 
         if self.car_body.position[1] < MAP_MIN_Y:
-            print("Game Over! You've fallen off the map!")
+            print(
+                f"Game Over! You've fallen off the map! Car position: x={self.car_body.position[0]:.2f}, y={self.car_body.position[1]:.2f}")
             return True
 
         if self.car_body.position[0] >= END_X:
-            print("Congratulations! You've completed the map!")
+            print(f"Congratulations! You've completed the map! Car position: x={self.car_body.position[0]:.2f}, y={self.car_body.position[1]:.2f}")
             return True
 
         return False
@@ -282,5 +282,8 @@ class HillClimbEnv(gym.Env):
     def _get_observation(self):
         car_pos = self.car_body.position
         car_vel = self.car_body.linearVelocity
+        ground_slope = self._calculate_ground_slope()
+        current_angle = self.car_body.angle
+        angle_diff = abs(current_angle - ground_slope)
         return np.array(
-            [car_pos[0], car_pos[1], car_vel[0], car_vel[1]])
+            [car_pos[0], car_pos[1], car_vel[0], car_vel[1], ground_slope, angle_diff])
